@@ -3,6 +3,7 @@
 Node *code[100];
 Token *token;
 char *user_input;
+LVar *locals;
 
 void error(char *fmt, ...){
   va_list ap;
@@ -60,6 +61,15 @@ int expect_number(){
 
 bool at_eof(){
   return token->kind == TK_EOF;
+}
+
+LVar *find_lvar(Token *tok){
+  for (LVar *var = locals; var; var = var->next){
+    if (var->len == tok->len && (! memcmp(tok->str, var->name, var->len))){
+      return var;
+    }
+    return NULL;
+  }
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len){
@@ -140,6 +150,11 @@ Node *new_node_num(int val){
 // program    = stmt*
 void program(){
   int i = 0;
+
+  LVar head;
+  head.next = NULL;
+  locals = &head;
+
   while (! at_eof()){
     code[i++] = stmt();
   }
@@ -261,7 +276,20 @@ Node *primary(){
   if (tok){
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+    LVar *lvar = find_lvar(tok);
+    if (lvar){
+      node->offset = lvar->offset;
+    } else {
+      lvar = calloc(1, sizeof(LVar));
+      lvar->next = locals;
+      lvar->name = tok->str;
+      lvar->len = tok->len;
+      lvar->offset = locals->offset + 8;
+      node->offset = lvar->offset;
+      locals = lvar;
+    }
+
     return node;
   }
 
