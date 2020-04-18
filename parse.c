@@ -236,8 +236,6 @@ Node *add(){
   }
 }
 
-// mul = primary ("*" primary | "/" primary)*
-// ↓
 // mul = unary ("*" unary | "/" unary)*
 Node *mul(){
   Node *node = unary();
@@ -253,8 +251,6 @@ Node *mul(){
   }
 }
 
-// unary = ("+" | "-")? primary
-// 下記実装は
 // unary = ("+" | "-")* primary
 Node *unary(){
   if (consume("+")){
@@ -266,8 +262,6 @@ Node *unary(){
   return primary();
 }
 
-
-// primary    = "(" expr ")" | num
 // primary    = num | ident | "(" expr ")"
 Node *primary(){
   if (consume("(")){
