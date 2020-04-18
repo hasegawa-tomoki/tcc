@@ -64,12 +64,12 @@ bool at_eof(){
 }
 
 LVar *find_lvar(Token *tok){
-  for (LVar *var = locals; var; var = var->next){
+  for (LVar *var = locals; var->next != NULL; var = var->next){
     if (var->len == tok->len && (! memcmp(tok->str, var->name, var->len))){
       return var;
     }
-    return NULL;
   }
+  return NULL;
 }
 
 Token *new_token(TokenKind kind, Token *cur, char *str, int len){
@@ -87,6 +87,7 @@ bool startswith(char *p, char *q){
 
 Token *tokenize(){
   char *p = user_input;
+
   Token head;
   head.next = NULL;
   Token *cur = &head;
@@ -104,14 +105,17 @@ Token *tokenize(){
     } 
 
     if ('a' <= *p && *p <= 'z'){
-      cur = new_token(TK_IDENT, cur, p, 1);
-      p++;
+      char *q = p;
+      do {
+        q++;
+      } while ('a' <= *q && *q <= 'z');
+      cur = new_token(TK_IDENT, cur, p, q - p);
+      p = q;
       continue;
     }
 
     if (strchr("+-*/()<>;=", *p)){
-      cur = new_token(TK_RESERVED, cur, p, 1);
-      p++;
+      cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
 
@@ -153,6 +157,7 @@ void program(){
 
   LVar head;
   head.next = NULL;
+  head.offset = -8;
   locals = &head;
 
   while (! at_eof()){
@@ -288,6 +293,12 @@ Node *primary(){
       lvar->offset = locals->offset + 8;
       node->offset = lvar->offset;
       locals = lvar;
+
+      // for debug
+      // char t[64];
+      // strncpy(t, lvar->name, lvar->len);
+      // t[lvar->len] = '\0';
+      // fprintf(stderr, "  Local variable %s added.\n", t);
     }
 
     return node;

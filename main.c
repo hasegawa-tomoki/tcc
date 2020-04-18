@@ -1,5 +1,13 @@
 #include "tcc.h"
 
+int count_lvars(){
+  int count = 0;
+  for (LVar *var = locals; var->next != NULL; var = var->next){
+    count++;
+  }
+  return count;
+}
+
 int main(int argc, char **argv){
   if (argc != 2){
     error("引数の個数が正しくありません");
@@ -17,7 +25,7 @@ int main(int argc, char **argv){
   // prologue
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n");
+  printf("  sub rsp, %d\n", count_lvars() * 8);
 
   for (int i = 0; code[i]; i++){
     gen(code[i]);

@@ -5,6 +5,7 @@ assert() {
 
   ./tcc "$input" > tmp.s
   cc -o tmp tmp.s
+  chmod 755 tmp
   ./tmp
   actual="$?"
 
@@ -39,6 +40,7 @@ assert 1 '2>1'
 assert 0 '1>2'
 assert 2 '(1 > 2) + (2 > 1) + (1 == 1)'
 assert 3 'a = 3'
+assert 3 'ab = 3'
 assert 3 'a = b = 3'
 assert 6 'a = b = 3;a + b;'
 
