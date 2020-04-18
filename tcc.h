@@ -9,6 +9,7 @@
 
 typedef enum {
   TK_RESERVED,
+  TK_IDENT, 
   TK_NUM,
   TK_EOF,
 } TokenKind;
@@ -44,6 +45,8 @@ typedef enum {
   ND_NE,  // !=
   ND_LT,  // <
   ND_LE,  // <=
+  ND_ASSIGN, // =
+  ND_LVAR, // local variable
   ND_NUM, // integer
 } NodeKind;
 
@@ -53,12 +56,18 @@ struct Node {
   Node *lhs;
   Node *rhs;
   int val;
+  int offset;
 };
+
+extern Node *code[100];
 
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
+void program();
+Node *stmt();
 Node *expr();
+Node *assign();
 Node *equality();
 Node *relational();
 Node *add();
@@ -69,3 +78,16 @@ Node *primary();
 // codegen.c
 
 void gen(Node *node);
+
+/*
+program    = stmt*
+stmt       = expr ";"
+expr       = assign
+assign     = equality ("=" assign)?
+equality   = relational ("==" relational | "!=" relational)*
+relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+add        = mul ("+" mul | "-" mul)*
+mul        = unary ("*" unary | "/" unary)*
+unary      = ("+" | "-")? primary
+primary    = num | ident | "(" expr ")"
+*/

@@ -1,5 +1,6 @@
 #include "tcc.h"
 
+Node *code[100];
 Token *token;
 char *user_input;
 
@@ -32,16 +33,25 @@ bool consume(char *op){
   return true;
 }
 
+Token *consume_ident(){
+  if (token->kind != TK_IDENT){
+    return NULL;
+  }
+  Token *t = token;
+  token = token->next;
+  return t;
+}
+
 bool expect(char *op){
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
-    error_at(token->str, "expected '%c'", op);
+    error_at(token->str, "expected '%s'", op);
   }
   token = token->next;
 }
 
 int expect_number(){
   if (token->kind != TK_NUM){
-    error_at(token->str, "expected a number (1)");
+    error_at(token->str, "expected a number (ERR1)");
   }
   int val = token->val;
   token = token->next;
@@ -83,7 +93,13 @@ Token *tokenize(){
       continue;
     } 
 
-    if (strchr("+-*/()<>", *p)){
+    if ('a' <= *p && *p <= 'z'){
+      cur = new_token(TK_IDENT, cur, p, 1);
+      p++;
+      continue;
+    }
+
+    if (strchr("+-*/()<>;=", *p)){
       cur = new_token(TK_RESERVED, cur, p, 1);
       p++;
       continue;
@@ -97,7 +113,7 @@ Token *tokenize(){
       continue;
     }
 
-    error_at(p, "expected a number (2)");
+    error_at(p, "expected a number (ERR2)");
   }
 
   new_token(TK_EOF, cur, p, 0);
@@ -121,9 +137,34 @@ Node *new_node_num(int val){
   return node;
 }
 
-// expr       = equality
+// program    = stmt*
+void program(){
+  int i = 0;
+  while (! at_eof()){
+    code[i++] = stmt();
+  }
+  code[i] = NULL;
+}
+
+// stmt       = expr ";"
+Node *stmt(){
+  Node *node = expr();
+  consume(";");
+  return node;
+}
+
+// expr       = assign
 Node *expr(){
+  return assign();
+}
+
+// assign     = equality ("=" assign)?
+Node *assign(){
   Node *node = equality();
+  if (consume("=")){
+    node = new_node(ND_ASSIGN, node, assign());
+  }
+  return node;
 }
 
 // equality   = relational ("==" relational | "!=" relational)*
@@ -206,12 +247,21 @@ Node *unary(){
 }
 
 
-// primary = "(" expr ")" | num
+// primary    = "(" expr ")" | num
+// primary    = num | ident | "(" expr ")"
 Node *primary(){
   if (consume("(")){
     Node *node = expr();
     expect(")");
 
+    return node;
+  }
+
+  Token *tok = consume_ident();
+  if (tok){
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
     return node;
   }
 
