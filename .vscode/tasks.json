@@ -6,23 +6,30 @@
     {
       "label": "make",
       "type": "shell",
-      "command": "make", 
+      "command": "make",
       "args": [],
-      "group": "build"
+      "group": "build",
+      "problemMatcher": []
     },
     {
       "label": "make clean",
       "type": "shell",
-      "command": "make", 
-      "args": ["clean"],
-      "group": "build"
+      "command": "make",
+      "args": [
+        "clean"
+      ],
+      "group": "build",
+      "problemMatcher": []
     },
     {
       "label": "make test",
       "type": "shell",
-      "command": "make", 
-      "args": ["test"],
-      "group": "build"
+      "command": "make",
+      "args": [
+        "test"
+      ],
+      "group": "build",
+      "problemMatcher": []
     }
   ]
 }
