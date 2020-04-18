@@ -63,15 +63,6 @@ bool at_eof(){
   return token->kind == TK_EOF;
 }
 
-LVar *find_lvar(Token *tok){
-  for (LVar *var = locals; var->next != NULL; var = var->next){
-    if (var->len == tok->len && (! memcmp(tok->str, var->name, var->len))){
-      return var;
-    }
-  }
-  return NULL;
-}
-
 Token *new_token(TokenKind kind, Token *cur, char *str, int len){
   Token *tok = calloc(1, sizeof(Token));
   tok->kind = kind;

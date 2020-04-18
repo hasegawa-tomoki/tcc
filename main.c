@@ -1,13 +1,5 @@
 #include "tcc.h"
 
-int count_lvars(){
-  int count = 0;
-  for (LVar *var = locals; var->next != NULL; var = var->next){
-    count++;
-  }
-  return count;
-}
-
 int main(int argc, char **argv){
   if (argc != 2){
     error("引数の個数が正しくありません");

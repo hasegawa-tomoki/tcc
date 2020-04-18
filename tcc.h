@@ -84,6 +84,11 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+// lvar.c
+
+int count_lvars();
+LVar *find_lvar(Token *tok);
+
 // codegen.c
 
 void gen(Node *node);
