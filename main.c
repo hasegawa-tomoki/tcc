@@ -9,8 +9,17 @@ int main(int argc, char **argv){
   user_input = argv[1];
   token = tokenize();
   //show_tokens(token);
-  program();
-  //show_nodes(code);
+  Function *prog = program();
+  
+  // Calc offset
+  int offset = 0;
+  for (Var *var = prog->locals; var; var = var->next){
+    offset += 8;
+    var->offset = offset;
+  }
+  prog->stack_size = offset;
+  //show_nodes(prog);
+
 
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
@@ -20,13 +29,13 @@ int main(int argc, char **argv){
   printf("# --- prologue\n");
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, %d\n", count_lvars() * 8);
+  printf("  sub rsp, %d\n", prog->stack_size);
   printf("# --- \n\n");
 
-  for (int i = 0; code[i]; i++){
-    gen(code[i]);
+  for (Node *node = prog->node; node; node = node->next){
+    gen(node);
     printf("  pop rax\n");
-    printf("# --- end %s\n\n", node_name(code[i]->kind));
+    printf("# --- end %s\n\n", node_name(node->kind));
   }
 
   // epilogue

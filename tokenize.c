@@ -2,7 +2,7 @@
 
 Token *token;
 char *user_input;
-LVar *locals;
+Var *locals;
 
 bool consume(char *op){
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
@@ -82,32 +82,6 @@ char *starts_with_reserved(char *p){
     }
   }
   return NULL;
-}
-
-void show_token(Token *tok){
-    char t[64];
-    strncpy(t, tok->str, tok->len);
-    t[tok->len] = '\0';
-
-    static char *token_kinds[] = {
-      "TK_RESERVED",
-      "TK_RETURN",
-      "TK_IDENT," 
-      "TK_NUM",
-      "TK_EOF",
-    };
-
-    fprintf(stderr, "  -- token  kind: %-20s  str: %s", token_kinds[tok->kind], t);
-    if (tok->kind == TK_NUM){
-      fprintf(stderr, "  val: %d", tok->val);
-    }
-    fprintf(stderr, "\n");
-}
-
-void show_tokens(Token *token){
-  for (Token *tok = token; tok->kind != TK_EOF; tok = tok->next){
-    show_token(tok);
-  }
 }
 
 Token *tokenize(){

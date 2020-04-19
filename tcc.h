@@ -29,17 +29,16 @@ struct Token {
   int len;
 };
 
-typedef struct LVar LVar;
-struct LVar {
-  LVar *next;
+typedef struct Var Var;
+struct Var {
+  Var *next;
   char *name;
-  int len;
   int offset;
 };
 
 extern Token *token;
 extern char *user_input;
-extern LVar *locals;
+extern Var *locals;
 
 bool consume(char *op);
 Token *consume_ident();
@@ -50,8 +49,6 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
 bool is_alpha(char c);
 bool is_alnum(char c);
-void show_token(Token *tok);
-void show_tokens(Token *tok);
 Token *tokenize();
 
 // parse.c
@@ -66,21 +63,28 @@ typedef enum {
   ND_LT,  // <
   ND_LE,  // <=
   ND_ASSIGN, // =
-  ND_LVAR, // local variable
+  ND_VAR, // local variable
   ND_NUM, // integer
   ND_RETURN, // return
   ND_IF, 
   ND_WHILE, 
   ND_FOR, 
+  ND_BLOCK,
 } NodeKind;
 
 typedef struct Node Node;
 struct Node {
   NodeKind kind;
+  Node *next;
+
+  // Left/right hand side
   Node *lhs;
   Node *rhs;
+  // Used if kind == ND_NUM
   int val;
-  int offset;
+  // Used if kind == ND_VAR
+  Var *var;
+  //int offset;
   // "if" "(" cond ")" then "else" els
   Node *cond;
   Node *then;
@@ -88,15 +92,24 @@ struct Node {
   // "for" "(" init ";" cond ";" iterate ")" then
   Node *init;
   Node *iterate;
+  // Block
+  Node *body;
+};
+
+typedef struct Function Function;
+struct Function {
+  Node *node;
+  Var *locals;
+  int stack_size;
 };
 
 extern Node *code[100];
 
 Node *new_node(NodeKind kind);
 Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
+Node *new_num_node(int val);
 
-void program();
+Function *program();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -107,14 +120,20 @@ Node *mul();
 Node *unary();
 Node *primary();
 char *node_name(int kind);
-void show_node(Node *node, char *name, int indent);
-void show_nodes(Node *code[]);
 
 // lvar.c
 
 int count_lvars();
-LVar *find_lvar(Token *tok);
+Var *find_lvar(Token *tok);
 
 // codegen.c
 
 void gen(Node *node);
+
+// debug.c
+
+void show_node(Node *node, char *name, int indent);
+void show_nodes(Function *prog);
+void show_token(Token *tok);
+void show_tokens(Token *tok);
+

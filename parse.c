@@ -17,34 +17,51 @@ Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs){
   return node;
 }
 
-Node *new_node_num(int val){
+Node *new_num_node(int val){
   Node *node = new_node(ND_NUM);
   node->val = val;
 
   return node;
 }
 
-// program    = stmt*
-void program(){
-  int i = 0;
+Node *new_var_node(Var *var){
+  Node *node = new_node(ND_VAR);
+  node->var = var;
+  return node;
+}
 
-  LVar head;
-  head.next = NULL;
-  head.offset = -8;
-  locals = &head;
+Var *new_lvar(char *name){
+  Var *var = calloc(1, sizeof(Var));
+  var->next = locals;
+  var->name = name;
+  locals = var;
+  return var;
+}
+
+// program    = stmt*
+Function *program(){
+  locals = NULL;
+
+  Node head = {};
+  Node *cur = &head;
 
   while (! at_eof()){
-    code[i++] = stmt();
+    cur->next = stmt();
+    cur = cur->next;
   }
-  code[i] = NULL;
+
+  Function *prog = calloc(1, sizeof(Function));
+  prog->node = head.next;
+  prog->locals = locals;
+  return prog;
 }
 
 // stmt = expr ";"
+//      | "{" stmt* "}"
 //      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
-
 Node *stmt(){
   Node *node;
 
@@ -87,6 +104,18 @@ Node *stmt(){
     node->iterate = expr();
     expect(")");
     node->then = stmt();
+    return node;
+  }
+
+  if (consume("{")){
+    Node head = {};
+    Node *cur = &head;
+    while (!consume("}")){
+      cur->next = stmt();
+      cur = cur->next;
+    }
+    node = new_node(ND_BLOCK);
+    node->body = head.next;
     return node;
   }
 
@@ -179,7 +208,7 @@ Node *unary(){
     return unary();
   }
   if (consume("-")){
-    return new_node_with_lrs(ND_SUB, new_node_num(0), unary());
+    return new_node_with_lrs(ND_SUB, new_num_node(0), unary());
   }
   return primary();
 }
@@ -195,93 +224,14 @@ Node *primary(){
 
   Token *tok = consume_ident();
   if (tok){
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_LVAR;
-
-    LVar *lvar = find_lvar(tok);
-    if (lvar){
-      node->offset = lvar->offset;
-    } else {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals;
-      lvar->name = tok->str;
-      lvar->len = tok->len;
-      lvar->offset = locals->offset + 8;
-      node->offset = lvar->offset;
-      locals = lvar;
-
-      // for debug
-      // char t[64];
-      // strncpy(t, lvar->name, lvar->len);
-      // t[lvar->len] = '\0';
-      // fprintf(stderr, "  Local variable %s added.\n", t);
+    Var *lvar = find_lvar(tok);
+    if (! lvar){
+      char *name = calloc(tok->len, sizeof(char));
+      strncpy(name, tok->str, tok->len);
+      lvar = new_lvar(name);
     }
-
-    return node;
+    return new_var_node(lvar);
   }
 
-  return new_node_num(expect_number());
-}
-
-char *node_name(int kind){
-    static char *node_kinds[] = {
-      "ND_ADD", 
-      "ND_SUB", 
-      "ND_MUL", 
-      "ND_DIV", 
-      "ND_EQ", 
-      "ND_NE", 
-      "ND_LT", 
-      "ND_LE", 
-      "ND_ASSIGN", 
-      "ND_LVAR", 
-      "ND_NUM", 
-      "ND_RETURN", 
-      "ND_IF", 
-      "ND_WHILE", 
-      "ND_FOR", 
-    };
-    return node_kinds[kind];
-}
-
-void show_node(Node *node, char *name, int indent){
-    for (int i = 0; i < (indent + 1) * 2; i++){
-      fprintf(stderr, " ");
-    }
-
-    fprintf(stderr, "-- %s  kind: %-20s  ", name, node_name(node->kind));
-    if (node->kind == ND_LVAR){
-      fprintf(stderr, "  offset: %d", node->offset);
-    }
-    if (node->kind == ND_NUM){
-      fprintf(stderr, "  val: %d", node->val);
-    }
-    fprintf(stderr, "\n");
-    if (node->lhs){
-      show_node(node->lhs, "lhs", indent + 1);
-    }
-    if (node->rhs){
-      show_node(node->rhs, "rhs", indent + 1);
-    }
-    if (node->cond){
-      show_node(node->cond, "cond", indent + 1);
-    }
-    if (node->then){
-      show_node(node->then, "then", indent + 1);
-    }
-    if (node->els){
-      show_node(node->els, "els", indent + 1);
-    }
-    if (node->init){
-      show_node(node->init, "init", indent + 1);
-    }
-    if (node->iterate){
-      show_node(node->iterate, "iterate", indent + 1);
-    }
-}
-
-void show_nodes(Node *code[]){
-  for (int i = 0; code[i]; i++){
-      show_node(code[i], "node", 0);
-  }
+  return new_num_node(expect_number());
 }

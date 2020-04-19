@@ -2,15 +2,15 @@
 
 int count_lvars(){
   int count = 0;
-  for (LVar *var = locals; var->next != NULL; var = var->next){
+  for (Var *var = locals; var->next != NULL; var = var->next){
     count++;
   }
   return count;
 }
 
-LVar *find_lvar(Token *tok){
-  for (LVar *var = locals; var->next != NULL; var = var->next){
-    if (var->len == tok->len && (! memcmp(tok->str, var->name, var->len))){
+Var *find_lvar(Token *tok){
+  for (Var *var = locals; var; var = var->next){
+    if (strlen(var->name) == tok->len && !strncmp(tok->str, var->name, tok->len)){
       return var;
     }
   }

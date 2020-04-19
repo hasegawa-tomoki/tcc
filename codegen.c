@@ -1,12 +1,12 @@
 #include "tcc.h"
 
 void gen_lval(Node *node){
-  if (node->kind != ND_LVAR){
+  if (node->kind != ND_VAR){
     error("not an lvalue");
   }
 
   printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->offset);
+  printf("  sub rax, %d\n", node->var->offset);
   printf("  push rax\n");
 }
 
@@ -22,7 +22,7 @@ void gen(Node *node){
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
-    case ND_LVAR:
+    case ND_VAR:
       gen_lval(node);
       printf("  pop rax\n");
       printf("  mov rax, [rax]\n");
@@ -82,6 +82,11 @@ void gen(Node *node){
       gen(node->then);
       gen(node->iterate);
       printf(".Lend_%d:\n", label_no);
+      return;
+    case ND_BLOCK:
+      for (Node *n = node->body; n; n = n->next){
+        gen(n);
+      }
       return;
   }
 
