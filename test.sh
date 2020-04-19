@@ -41,7 +41,11 @@ assert 0 '1>2'
 assert 2 '(1 > 2) + (2 > 1) + (1 == 1)'
 assert 3 'a = 3'
 assert 3 'ab = 3'
+assert 255 'ab = 255'
 assert 3 'a = b = 3'
 assert 6 'a = b = 3;a + b;'
+assert 3 'a = b = 3;return 3;'
+assert 6 'a = b = 3;return a + b;'
+assert 6 'a = b = 3;return a + b; 42'
 
 echo OK

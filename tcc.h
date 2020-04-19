@@ -5,10 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-// parse.c
+// util.c
+
+void error(char *fmt, ...);
+void error_at(char *loc, char *fmt, ...);
+
+// tokenize.c
 
 typedef enum {
   TK_RESERVED,
+  TK_RETURN,
   TK_IDENT, 
   TK_NUM,
   TK_EOF,
@@ -29,21 +35,23 @@ struct LVar {
   char *name;
   int len;
   int offset;
-}
-extern *locals;
+};
 
 extern Token *token;
 extern char *user_input;
+extern LVar *locals;
 
-void error(char *fmt, ...);
-void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
+Token *consume_ident();
 bool expect(char *op);
 int expect_number();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
+int is_alnum(char c);
 Token *tokenize();
+
+// parse.c
 
 typedef enum {
   ND_ADD, // +
@@ -57,6 +65,7 @@ typedef enum {
   ND_ASSIGN, // =
   ND_LVAR, // local variable
   ND_NUM, // integer
+  ND_RETURN, // return
 } NodeKind;
 
 typedef struct Node Node;
