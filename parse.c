@@ -2,9 +2,15 @@
 
 Node *code[100];
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
+Node *new_node(NodeKind kind){
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
+
+  return node;
+}
+
+Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs){
+  Node *node = new_node(kind);
   node->lhs = lhs;
   node->rhs = rhs;
 
@@ -12,8 +18,7 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs){
 }
 
 Node *new_node_num(int val){
-  Node *node = calloc(1, sizeof(Node));
-  node->kind = ND_NUM;
+  Node *node = new_node(ND_NUM);
   node->val = val;
 
   return node;
@@ -35,24 +40,58 @@ void program(){
 }
 
 // stmt = expr ";"
-// stmt = expr ";" | "return" expr ";"
-// stmt = expr ";"
+//      | "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
-//      | "return" expr ";"
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 
 Node *stmt(){
   Node *node;
 
   if (consume("return")){
-    node = calloc(1, sizeof(Node));
-    node->kind = ND_RETURN;
+    node = new_node(ND_RETURN);
     node->lhs = expr();
     expect(";");
-  } else {
-    node = expr();
-    consume(";");
+    return node;
   }
+
+  if (consume("if")){
+    expect("(");
+    node = new_node(ND_IF);
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+
+    if (consume("else")){
+      node->els = stmt();
+    }
+    return node;
+  }
+
+  if (consume("while")){
+    expect("(");
+    node = new_node(ND_WHILE);
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    return node;
+  }
+
+  if (consume("for")){
+    expect("(");
+    node = new_node(ND_FOR);
+    node->init = expr();
+    expect(";");
+    node->cond = expr();
+    expect(";");
+    node->iterate = expr();
+    expect(")");
+    node->then = stmt();
+    return node;
+  }
+
+  node = expr();
+  consume(";");
   return node;
 }
 
@@ -65,7 +104,7 @@ Node *expr(){
 Node *assign(){
   Node *node = equality();
   if (consume("=")){
-    node = new_node(ND_ASSIGN, node, assign());
+    node = new_node_with_lrs(ND_ASSIGN, node, assign());
   }
   return node;
 }
@@ -76,9 +115,9 @@ Node *equality (){
 
   for (;;){
     if (consume("==")){
-      node = new_node(ND_EQ, node, relational());
+      node = new_node_with_lrs(ND_EQ, node, relational());
     } else if (consume("!=")){
-      node = new_node(ND_NE, node, relational());
+      node = new_node_with_lrs(ND_NE, node, relational());
     } else {
       return node;
     }
@@ -91,13 +130,13 @@ Node *relational (){
 
   for (;;){
     if (consume("<=")){
-      node = new_node(ND_LE, node, add());
+      node = new_node_with_lrs(ND_LE, node, add());
     } else if (consume("<")){
-      node = new_node(ND_LT, node, add());
+      node = new_node_with_lrs(ND_LT, node, add());
     } else if (consume(">=")){
-      node = new_node(ND_LE, add(), node);
+      node = new_node_with_lrs(ND_LE, add(), node);
     } else if (consume(">")){
-      node = new_node(ND_LT, add(), node);
+      node = new_node_with_lrs(ND_LT, add(), node);
     } else {
       return node;
     }
@@ -110,9 +149,9 @@ Node *add(){
 
   for (;;){
     if (consume("+")){
-      node = new_node(ND_ADD, node, mul());
+      node = new_node_with_lrs(ND_ADD, node, mul());
     } else if (consume("-")){
-      node = new_node(ND_SUB, node, mul());
+      node = new_node_with_lrs(ND_SUB, node, mul());
     } else {
       return node;
     }
@@ -125,9 +164,9 @@ Node *mul(){
   
   for (;;){
     if (consume("*")){
-      node = new_node(ND_MUL, node, unary());
+      node = new_node_with_lrs(ND_MUL, node, unary());
     } else if (consume("/")){
-      node = new_node(ND_DIV, node, unary());
+      node = new_node_with_lrs(ND_DIV, node, unary());
     } else {
       return node;
     }
@@ -140,7 +179,7 @@ Node *unary(){
     return unary();
   }
   if (consume("-")){
-    return new_node(ND_SUB, new_node_num(0), unary());
+    return new_node_with_lrs(ND_SUB, new_node_num(0), unary());
   }
   return primary();
 }
@@ -184,11 +223,7 @@ Node *primary(){
   return new_node_num(expect_number());
 }
 
-void show_node(Node *node, int indent){
-    for (int i = 0; i < (indent + 1) * 2; i++){
-      fprintf(stderr, " ");
-    }
-
+char *node_name(int kind){
     static char *node_kinds[] = {
       "ND_ADD", 
       "ND_SUB", 
@@ -202,9 +237,19 @@ void show_node(Node *node, int indent){
       "ND_LVAR", 
       "ND_NUM", 
       "ND_RETURN", 
+      "ND_IF", 
+      "ND_WHILE", 
+      "ND_FOR", 
     };
+    return node_kinds[kind];
+}
 
-    fprintf(stderr, "-- node  kind: %-20s  ", node_kinds[node->kind]);
+void show_node(Node *node, char *name, int indent){
+    for (int i = 0; i < (indent + 1) * 2; i++){
+      fprintf(stderr, " ");
+    }
+
+    fprintf(stderr, "-- %s  kind: %-20s  ", name, node_name(node->kind));
     if (node->kind == ND_LVAR){
       fprintf(stderr, "  offset: %d", node->offset);
     }
@@ -213,15 +258,30 @@ void show_node(Node *node, int indent){
     }
     fprintf(stderr, "\n");
     if (node->lhs){
-      show_node(node->lhs, indent + 1);
+      show_node(node->lhs, "lhs", indent + 1);
     }
     if (node->rhs){
-      show_node(node->rhs, indent + 1);
+      show_node(node->rhs, "rhs", indent + 1);
+    }
+    if (node->cond){
+      show_node(node->cond, "cond", indent + 1);
+    }
+    if (node->then){
+      show_node(node->then, "then", indent + 1);
+    }
+    if (node->els){
+      show_node(node->els, "els", indent + 1);
+    }
+    if (node->init){
+      show_node(node->init, "init", indent + 1);
+    }
+    if (node->iterate){
+      show_node(node->iterate, "iterate", indent + 1);
     }
 }
 
 void show_nodes(Node *code[]){
   for (int i = 0; code[i]; i++){
-      show_node(code[i], 0);
+      show_node(code[i], "node", 0);
   }
 }

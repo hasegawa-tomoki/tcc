@@ -69,6 +69,9 @@ typedef enum {
   ND_LVAR, // local variable
   ND_NUM, // integer
   ND_RETURN, // return
+  ND_IF, 
+  ND_WHILE, 
+  ND_FOR, 
 } NodeKind;
 
 typedef struct Node Node;
@@ -78,11 +81,19 @@ struct Node {
   Node *rhs;
   int val;
   int offset;
+  // "if" "(" cond ")" then "else" els
+  Node *cond;
+  Node *then;
+  Node *els;
+  // "for" "(" init ";" cond ";" iterate ")" then
+  Node *init;
+  Node *iterate;
 };
 
 extern Node *code[100];
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_node(NodeKind kind);
+Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_node_num(int val);
 
 void program();
@@ -95,7 +106,8 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
-void show_node(Node *node, int indent);
+char *node_name(int kind);
+void show_node(Node *node, char *name, int indent);
 void show_nodes(Node *code[]);
 
 // lvar.c

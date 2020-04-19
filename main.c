@@ -17,19 +17,24 @@ int main(int argc, char **argv){
   printf("main:\n");
 
   // prologue
+  printf("# --- prologue\n");
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, %d\n", count_lvars() * 8);
+  printf("# --- \n\n");
 
   for (int i = 0; code[i]; i++){
     gen(code[i]);
     printf("  pop rax\n");
+    printf("# --- end %s\n\n", node_name(code[i]->kind));
   }
 
   // epilogue
+  printf("# --- epilogue\n");
   printf("  mov rsp, rbp\n");
   printf("  pop rbp;\n");
   printf("  ret\n");
+  printf("# --- \n\n");
   return 0;
 }
 
