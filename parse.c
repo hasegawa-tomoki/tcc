@@ -34,8 +34,13 @@ void program(){
   code[i] = NULL;
 }
 
-// stmt       = expr ";"
+// stmt = expr ";"
 // stmt = expr ";" | "return" expr ";"
+// stmt = expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
+//      | "return" expr ";"
+
 Node *stmt(){
   Node *node;
 
@@ -177,4 +182,46 @@ Node *primary(){
   }
 
   return new_node_num(expect_number());
+}
+
+void show_node(Node *node, int indent){
+    for (int i = 0; i < (indent + 1) * 2; i++){
+      fprintf(stderr, " ");
+    }
+
+    static char *node_kinds[] = {
+      "ND_ADD", 
+      "ND_SUB", 
+      "ND_MUL", 
+      "ND_DIV", 
+      "ND_EQ", 
+      "ND_NE", 
+      "ND_LT", 
+      "ND_LE", 
+      "ND_ASSIGN", 
+      "ND_LVAR", 
+      "ND_NUM", 
+      "ND_RETURN", 
+    };
+
+    fprintf(stderr, "-- node  kind: %-20s  ", node_kinds[node->kind]);
+    if (node->kind == ND_LVAR){
+      fprintf(stderr, "  offset: %d", node->offset);
+    }
+    if (node->kind == ND_NUM){
+      fprintf(stderr, "  val: %d", node->val);
+    }
+    fprintf(stderr, "\n");
+    if (node->lhs){
+      show_node(node->lhs, indent + 1);
+    }
+    if (node->rhs){
+      show_node(node->rhs, indent + 1);
+    }
+}
+
+void show_nodes(Node *code[]){
+  for (int i = 0; code[i]; i++){
+      show_node(code[i], 0);
+  }
 }

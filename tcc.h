@@ -48,7 +48,10 @@ int expect_number();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
-int is_alnum(char c);
+bool is_alpha(char c);
+bool is_alnum(char c);
+void show_token(Token *tok);
+void show_tokens(Token *tok);
 Token *tokenize();
 
 // parse.c
@@ -92,6 +95,8 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+void show_node(Node *node, int indent);
+void show_nodes(Node *code[]);
 
 // lvar.c
 
