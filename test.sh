@@ -46,6 +46,6 @@ assert 3 'a = b = 3'
 assert 6 'a = b = 3;a + b;'
 assert 3 'a = b = 3;return 3;'
 assert 6 'a = b = 3;return a + b;'
-assert 6 'a = b = 3;return a + b; 42'
+assert 42 'a = b = 3;return a + b; 42'
 
 echo OK
