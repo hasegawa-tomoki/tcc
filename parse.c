@@ -227,10 +227,19 @@ Node *primary(){
   Token *tok = consume_ident();
   if (tok){
     // Function call
+    Node *head;
     if (consume("(")){
-      expect(")");
+      while (! consume(")")){
+        head = expr();
+        Node *cur = head;
+        while (consume(",")){
+          cur->next = expr();
+          cur = cur->next;
+        }
+      }
       Node *node = new_node(ND_FUNCCALL);
       node->funcname = substr(tok->str, tok->len);
+      node->args = head;
       return node;
     }
 

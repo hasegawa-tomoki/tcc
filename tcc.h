@@ -98,6 +98,7 @@ struct Node {
   Node *body;
   // FUnction
   char *funcname;
+  Node *args;
 };
 
 typedef struct Function Function;

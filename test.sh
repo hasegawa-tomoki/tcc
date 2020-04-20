@@ -4,7 +4,7 @@ assert() {
   input="$2"
 
   ./tcc "$input" > tmp.s
-  cc -o tmp tmp.s
+  cc -o tmp test/func_noargs.o test/func_withargs.o tmp.s
   chmod 755 tmp
   ./tmp
   actual="$?"

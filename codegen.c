@@ -1,5 +1,7 @@
 #include "tcc.h"
 
+static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 void gen_lval(Node *node){
   if (node->kind != ND_VAR){
     error("not an lvalue");
@@ -16,7 +18,6 @@ int local_label_no(){
 }
 
 void gen(Node *node){
-  int label_no;
   printf("# --- %s\n", node_name(node->kind));
   switch (node->kind){
     case ND_NUM:
@@ -43,8 +44,8 @@ void gen(Node *node){
       printf("  pop rbp\n");
       printf("  ret\n");
       return;
-    case ND_IF:
-      label_no = local_label_no();
+    case ND_IF: {
+      int label_no = local_label_no();
       gen(node->cond);
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
@@ -60,8 +61,9 @@ void gen(Node *node){
       }
       printf(".Lend_%d:\n", label_no);
       return;
-    case ND_WHILE:
-      label_no = local_label_no();
+    }
+    case ND_WHILE: {
+      int label_no = local_label_no();
       printf(".Lbegin_%d:\n", label_no);
       gen(node->cond);
       printf("  pop rax\n");
@@ -71,8 +73,9 @@ void gen(Node *node){
       printf("  jmp .Lbegin_%d\n", label_no);
       printf(".Lend_%d:\n", label_no);
       return;
-    case ND_FOR:
-      label_no = local_label_no();
+    }
+    case ND_FOR: {
+      int label_no = local_label_no();
       gen(node->init);
       printf(".Lbegin_%d:\n", label_no);
       gen(node->cond);
@@ -83,14 +86,38 @@ void gen(Node *node){
       gen(node->iterate);
       printf(".Lend_%d:\n", label_no);
       return;
+    }
     case ND_BLOCK:
       for (Node *n = node->body; n; n = n->next){
         gen(n);
       }
       return;
-    case ND_FUNCCALL:
+    case ND_FUNCCALL: {
+      int argcnt = 0;
+      for (Node *arg = node->args; arg; arg = arg->next){
+        gen(arg);
+        argcnt++;
+      }
+      for (int i = argcnt - 1; i >= 0; i--){
+        printf("  pop %s\n", argregs[i]);
+      }
+
+      int label_no = local_label_no();
+      printf("  mov rax, rsp\n");
+      printf("  and rax, 15\n");
+      printf("  jnz .Lcall_%d\n", label_no);
+      printf("  mov rax, 0\n");
       printf("  call %s\n", node->funcname);
+      printf("  jmp .Lend_%d\n", label_no);
+      printf(".Lcall_%d:\n", label_no);
+      printf("  sub rsp, 8\n");
+      printf("  mov rax, 0\n");
+      printf("  call %s\n", node->funcname);
+      printf("  add rsp, 8\n");
+      printf(".Lend_%d:\n", label_no);
+      printf("  push rax\n");
       return;
+    }
   }
 
   gen(node->lhs);

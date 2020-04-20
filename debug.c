@@ -35,6 +35,9 @@ void show_node(Node *node, char *name, int indent){
     if (node->kind == ND_NUM){
       fprintf(stderr, "  val: %d", node->val);
     }
+    if (node->kind == ND_FUNCCALL){
+      fprintf(stderr, "  funcname: %s", node->funcname);
+    }
     fprintf(stderr, "\n");
     if (node->lhs){
       show_node(node->lhs, "lhs", indent + 1);
@@ -56,6 +59,12 @@ void show_node(Node *node, char *name, int indent){
     }
     if (node->iterate){
       show_node(node->iterate, "iterate", indent + 1);
+    }
+    if (node->body){
+      show_node(node->body, "body", indent + 1);
+    }
+    if (node->args){
+      show_node(node->args, "args", indent + 1);
     }
 }
 
