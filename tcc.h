@@ -45,6 +45,7 @@ bool consume(char *op);
 Token *consume_ident();
 bool expect(char *op);
 int expect_number();
+char *expect_ident();
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
@@ -96,13 +97,15 @@ struct Node {
   Node *iterate;
   // Block
   Node *body;
-  // FUnction
+  // Function Call
   char *funcname;
   Node *args;
 };
 
 typedef struct Function Function;
 struct Function {
+  Function *next;
+  char *name;
   Node *node;
   Var *locals;
   int stack_size;
@@ -115,6 +118,7 @@ Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_num_node(int val);
 
 Function *program();
+Function *function();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -134,6 +138,7 @@ Var *find_lvar(Token *tok);
 // codegen.c
 
 void gen(Node *node);
+void codegen(Function *prog);
 
 // debug.c
 

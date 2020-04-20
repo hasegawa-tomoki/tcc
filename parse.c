@@ -38,22 +38,40 @@ Var *new_lvar(char *name){
   return var;
 }
 
-// program    = stmt*
+// program    = function*
 Function *program(){
+  Function head = {};
+  Function *cur = &head;
+
+  while (! at_eof()){
+    cur->next = function();
+    cur = cur->next;
+  }
+  return head.next;
+}
+
+// function = ident "(" ")" "{" stmt* "}"
+Function *function(){
   locals = NULL;
+
+  char *name = expect_ident();
+  expect("(");
+  expect(")");
+  expect("{");
 
   Node head = {};
   Node *cur = &head;
 
-  while (! at_eof()){
+  while (! consume("}")){
     cur->next = stmt();
     cur = cur->next;
   }
 
-  Function *prog = calloc(1, sizeof(Function));
-  prog->node = head.next;
-  prog->locals = locals;
-  return prog;
+  Function *fn = calloc(1, sizeof(Function));
+  fn->name = name;
+  fn->node = head.next;
+  fn->locals = locals;
+  return fn;
 }
 
 // stmt = expr ";"
@@ -227,7 +245,7 @@ Node *primary(){
   Token *tok = consume_ident();
   if (tok){
     // Function call
-    Node *head;
+    Node *head = NULL;
     if (consume("(")){
       while (! consume(")")){
         head = expr();

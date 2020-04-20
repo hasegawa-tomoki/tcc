@@ -1,6 +1,7 @@
 #include "tcc.h"
 
 static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+static char *funcname;
 
 void gen_lval(Node *node){
   if (node->kind != ND_VAR){
@@ -40,9 +41,7 @@ void gen(Node *node){
     case ND_RETURN:
       gen(node->lhs);
       printf("  pop rax\n");
-      printf("  mov rsp, rbp\n");
-      printf("  pop rbp\n");
-      printf("  ret\n");
+      printf("  jmp .Lreturn.%s\n", funcname);
       return;
     case ND_IF: {
       int label_no = local_label_no();
@@ -159,4 +158,34 @@ void gen(Node *node){
   }
 
   printf("  push rax\n");
+}
+
+void codegen(Function *prog){
+  printf(".intel_syntax noprefix\n");
+
+  for (Function *fn = prog; fn; fn = fn->next){
+    funcname = fn->name;
+
+    printf(".global %s\n", fn->name);
+    printf("%s:\n", fn->name);
+
+    // prologue
+    printf("# --- prologue\n");
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, %d\n", fn->stack_size);
+    printf("# --- \n\n");
+
+    for (Node *node = fn->node; node; node = node->next){
+      gen(node);
+    }
+
+    // epilogue
+    printf(".Lreturn.%s:\n", fn->name);
+    printf("# --- epilogue\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp;\n");
+    printf("  ret\n");
+    printf("# --- \n\n");
+  }
 }
