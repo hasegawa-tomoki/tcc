@@ -9,6 +9,7 @@
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
+char *substr(char *src, int len);
 
 // tokenize.c
 
@@ -70,6 +71,7 @@ typedef enum {
   ND_WHILE, 
   ND_FOR, 
   ND_BLOCK,
+  ND_FUNCCALL, 
 } NodeKind;
 
 typedef struct Node Node;
@@ -94,6 +96,8 @@ struct Node {
   Node *iterate;
   // Block
   Node *body;
+  // FUnction
+  char *funcname;
 };
 
 typedef struct Function Function;
@@ -136,4 +140,3 @@ void show_node(Node *node, char *name, int indent);
 void show_nodes(Function *prog);
 void show_token(Token *tok);
 void show_tokens(Token *tok);
-

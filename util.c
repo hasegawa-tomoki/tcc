@@ -20,3 +20,9 @@ void error_at(char *loc, char *fmt, ...){
   fprintf(stderr, "\n");
   exit(1);
 }
+
+char *substr(char *src, int len){
+  char *name = calloc(len, sizeof(char));
+  strncpy(name, src, len);
+  return name;
+}

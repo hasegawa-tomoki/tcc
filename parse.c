@@ -213,7 +213,9 @@ Node *unary(){
   return primary();
 }
 
-// primary    = num | ident | "(" expr ")"
+// primary    = num
+//          | ident ("(" ")")?
+//          | "(" expr ")"
 Node *primary(){
   if (consume("(")){
     Node *node = expr();
@@ -224,11 +226,18 @@ Node *primary(){
 
   Token *tok = consume_ident();
   if (tok){
+    // Function call
+    if (consume("(")){
+      expect(")");
+      Node *node = new_node(ND_FUNCCALL);
+      node->funcname = substr(tok->str, tok->len);
+      return node;
+    }
+
+    // Variable
     Var *lvar = find_lvar(tok);
     if (! lvar){
-      char *name = calloc(tok->len, sizeof(char));
-      strncpy(name, tok->str, tok->len);
-      lvar = new_lvar(name);
+      lvar = new_lvar(substr(tok->str, tok->len));
     }
     return new_var_node(lvar);
   }

@@ -88,6 +88,9 @@ void gen(Node *node){
         gen(n);
       }
       return;
+    case ND_FUNCCALL:
+      printf("  call %s\n", node->funcname);
+      return;
   }
 
   gen(node->lhs);

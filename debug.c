@@ -18,6 +18,7 @@ char *node_name(int kind){
       "ND_WHILE", 
       "ND_FOR", 
       "ND_BLOCK", 
+      "ND_FUNCCALL", 
     };
     return node_kinds[kind];
 }
