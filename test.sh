@@ -55,5 +55,6 @@ assert 10 "main(){ a = 1; while (a < 10) a = a + 1; return a; }"
 assert 10 "main(){ for (i = 0; i < 10; i = i + 1) return 10; }"
 assert 3 "main(){ for (i = 0; i < 10; i = i + 1){ a = 3; return a; } }"
 assert 10 "main(){ return test(); } test(){ return 10; }"
+assert 10 "test(){ return 10; } main(){ return test(); }"
 
 echo OK
