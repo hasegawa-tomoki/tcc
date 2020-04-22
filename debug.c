@@ -105,3 +105,15 @@ void show_tokens(Token *token){
   }
   fprintf(stderr, "** tokens end\n");
 }
+
+void show_variable(VarList *var_list){
+  fprintf(stderr, "  -- variable  name: %s  offset: %d\n", var_list->var->name, var_list->var->offset);
+}
+
+void show_variables(VarList *var_list){
+  fprintf(stderr, "** variables\n");
+  for (VarList *vl = var_list; vl; vl = vl->next){
+    show_variable(vl);
+  }
+ fprintf(stderr, "** variables end\n");
+}

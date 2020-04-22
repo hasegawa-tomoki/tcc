@@ -41,15 +41,20 @@ struct Type {
 
 typedef struct Var Var;
 struct Var {
-  Var *next;
   char *name;
   Type* type;
   int offset;
 };
 
+typedef struct VarList VarList;
+struct VarList {
+  VarList *next;
+  Var *var;
+};
+
 extern Token *token;
 extern char *user_input;
-extern Var *locals;
+extern VarList *locals;
 
 bool consume(char *op);
 Token *consume_ident();
@@ -118,9 +123,11 @@ struct Node {
 typedef struct Function Function;
 struct Function {
   Function *next;
+  Type *type;
   char *name;
+  VarList *params;
   Node *node;
-  Var *locals;
+  VarList *locals;
   int stack_size;
 };
 
@@ -145,7 +152,6 @@ char *node_name(int kind);
 
 // lvar.c
 
-int count_lvars();
 Var *find_lvar(Token *tok);
 
 // codegen.c
@@ -159,3 +165,5 @@ void show_node(Node *node, char *name, int indent);
 void show_nodes(Function *prog);
 void show_token(Token *tok);
 void show_tokens(Token *tok);
+void show_variable(VarList *var_list);
+void show_variables(VarList *var_list);

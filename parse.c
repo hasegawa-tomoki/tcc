@@ -2,6 +2,7 @@
 
 Node *code[100];
 
+// new_node* =============================
 Node *new_node(NodeKind kind){
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -30,11 +31,17 @@ Node *new_var_node(Var *var){
   return node;
 }
 
-Var *new_lvar(char *name){
+// other new* ============================
+Var *new_lvar(char *name, Type *type){
   Var *var = calloc(1, sizeof(Var));
-  var->next = locals;
   var->name = name;
-  locals = var;
+  var->type = type;
+
+  VarList *vl = calloc(1, sizeof(VarList));
+  vl->var = var;
+  vl->next = locals;
+  locals = vl;
+
   return var;
 }
 
@@ -43,6 +50,36 @@ Type *new_type(TypeKind kind){
   type->kind = kind;
   return type;
 }
+
+// other utils
+Type *expect_type(){
+  expect("int");
+  return new_type(TY_INT);
+}
+
+VarList *read_func_param(){
+    VarList *vl = calloc(1, sizeof(VarList));
+    Type *type = expect_type();
+    vl->var = new_lvar(expect_ident(), type);
+    return vl;
+}
+
+Var *read_func_params(){
+  if (consume(")")){
+    return NULL;
+  }
+
+  VarList *head = read_func_param();
+  VarList *cur = head;
+  while (! consume(")")){
+    expect(",");
+    cur->next = read_func_param();
+    cur = cur->next;
+  }
+
+  return head;
+}
+
 
 // program    = function*
 Function *program(){
@@ -60,14 +97,16 @@ Function *program(){
 Function *function(){
   locals = NULL;
 
+  Type *fn_type = expect_type();
   char *name = expect_ident();
+  // args
   expect("(");
-  expect(")");
+  Var *params = read_func_params();
+  // body
   expect("{");
 
   Node head = {};
   Node *cur = &head;
-
   while (! consume("}")){
     cur->next = stmt();
     cur = cur->next;
@@ -75,6 +114,8 @@ Function *function(){
 
   Function *fn = calloc(1, sizeof(Function));
   fn->name = name;
+  fn->type = fn_type;
+  fn->params = params;
   fn->node = head.next;
   fn->locals = locals;
   return fn;
@@ -147,8 +188,7 @@ Node *stmt(){
   if (peek("int")){
     consume("int");
     
-    Var *lvar = new_lvar(substr(token->str, token->len));
-    lvar->type = new_type(TY_INT);
+    Var *lvar = new_lvar(substr(token->str, token->len), new_type(TY_INT));
     return new_var_node(lvar);
   }
 

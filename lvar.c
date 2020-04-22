@@ -1,17 +1,9 @@
 #include "tcc.h"
 
-int count_lvars(){
-  int count = 0;
-  for (Var *var = locals; var->next != NULL; var = var->next){
-    count++;
-  }
-  return count;
-}
-
 Var *find_lvar(Token *tok){
-  for (Var *var = locals; var; var = var->next){
-    if (strlen(var->name) == tok->len && !strncmp(tok->str, var->name, tok->len)){
-      return var;
+  for (VarList *var_list = locals; var_list; var_list = var_list->next){
+    if (strlen(var_list->var->name) == tok->len && !strncmp(tok->str, var_list->var->name, tok->len)){
+      return var_list->var;
     }
   }
   return NULL;
