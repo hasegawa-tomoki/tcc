@@ -46,6 +46,14 @@ char *expect_ident(){
   return name;
 }
 
+bool peek(char *op){
+  char *name = substr(op, token->len);
+  if (token->kind != TK_RESERVED || strlen(name) != token->len || strncmp(token->str, name, token->len)){
+    return false;
+  }
+  return true;
+}
+
 bool at_eof(){
   return token->kind == TK_EOF;
 }
@@ -73,7 +81,7 @@ bool is_alnum(char c) {
 
 char *starts_with_reserved(char *p){
   static char *kw[] = {
-    "return", "if", "else", "while", "for", 
+    "return", "if", "else", "while", "for", "int", 
   };
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++){
     int len = strlen(kw[i]);

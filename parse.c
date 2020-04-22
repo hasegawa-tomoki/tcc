@@ -38,6 +38,12 @@ Var *new_lvar(char *name){
   return var;
 }
 
+Type *new_type(TypeKind kind){
+  Type *type = calloc(1, sizeof(Type));
+  type->kind = kind;
+  return type;
+}
+
 // program    = function*
 Function *program(){
   Function head = {};
@@ -80,6 +86,7 @@ Function *function(){
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | declaration
 Node *stmt(){
   Node *node;
 
@@ -135,6 +142,14 @@ Node *stmt(){
     node = new_node(ND_BLOCK);
     node->body = head.next;
     return node;
+  }
+
+  if (peek("int")){
+    consume("int");
+    
+    Var *lvar = new_lvar(substr(token->str, token->len));
+    lvar->type = new_type(TY_INT);
+    return new_var_node(lvar);
   }
 
   node = expr();
@@ -276,7 +291,7 @@ Node *primary(){
     // Variable
     Var *lvar = find_lvar(tok);
     if (! lvar){
-      lvar = new_lvar(substr(tok->str, tok->len));
+      error_at(token->str, "Undefined varible.");
     }
     return new_var_node(lvar);
   }

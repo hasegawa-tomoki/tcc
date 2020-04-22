@@ -131,6 +131,9 @@ void gen(Node *node){
     // *hoge
     case ND_DEREF:
       gen_lval(node->lhs);
+      printf("  pop rax\n");
+      printf("  mov rax, [rax]\n");
+      printf("  push rax\n");
       return;
   }
 

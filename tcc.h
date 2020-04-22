@@ -30,10 +30,20 @@ struct Token {
   int len;
 };
 
+typedef enum {
+  TY_INT, 
+} TypeKind;
+
+typedef struct Type Type;
+struct Type {
+  TypeKind kind;
+};
+
 typedef struct Var Var;
 struct Var {
   Var *next;
   char *name;
+  Type* type;
   int offset;
 };
 
@@ -46,6 +56,7 @@ Token *consume_ident();
 bool expect(char *op);
 int expect_number();
 char *expect_ident();
+bool peek(char *op);
 bool at_eof();
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
