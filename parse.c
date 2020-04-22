@@ -64,7 +64,7 @@ VarList *read_func_param(){
     return vl;
 }
 
-Var *read_func_params(){
+VarList *read_func_params(){
   if (consume(")")){
     return NULL;
   }
@@ -101,7 +101,7 @@ Function *function(){
   char *name = expect_ident();
   // args
   expect("(");
-  Var *params = read_func_params();
+  VarList *params = read_func_params();
   // body
   expect("{");
 
