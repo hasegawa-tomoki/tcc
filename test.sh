@@ -60,5 +60,9 @@ assert 8 "int main(){ int a; int b; a = 10; b = 20; return &b - &a; }"
 assert 20 "int main(){ int a; int b; int c; a = 10; b = 20; c = &b; return *b; }"
 assert 2 "int main(){ return test(2); } int test(int a){ return a; }"
 assert 5 "int main(){ return test(2, 3); } int test(int a, int b){ return a + b; }"
+assert 1 "int main(){ int *a; return 1; }"
+assert 1 "int main(){ int **a; return 1; }"
+assert 1 "int *main(){ int **a; return 1; }"
+assert 3 "int main(){ int x; int *y; y = &x; *y = 3; return x; }"
 
 echo OK

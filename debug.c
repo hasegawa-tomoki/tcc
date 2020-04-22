@@ -21,6 +21,7 @@ char *node_name(int kind){
       "ND_FUNCCALL", 
       "ND_ADDR",
       "ND_DEREF",
+      "ND_VAR", 
     };
     return node_kinds[kind];
 }

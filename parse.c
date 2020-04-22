@@ -52,9 +52,19 @@ Type *new_type(TypeKind kind){
 }
 
 // other utils
+Type *pointer_to(Type *type){
+  Type *ty = new_type(TY_PTR);
+  ty->ptr_to = type;
+  return ty;
+}
+
 Type *expect_type(){
   expect("int");
-  return new_type(TY_INT);
+  Type *ty = new_type(TY_INT);
+  while (consume("*")){
+    ty = pointer_to(ty);
+  }
+  return ty;
 }
 
 VarList *read_func_param(){
@@ -186,9 +196,8 @@ Node *stmt(){
   }
 
   if (peek("int")){
-    consume("int");
-    
-    Var *lvar = new_lvar(substr(token->str, token->len), new_type(TY_INT));
+    Type *type = expect_type();
+    Var *lvar = new_lvar(substr(token->str, token->len), type);
     return new_var_node(lvar);
   }
 

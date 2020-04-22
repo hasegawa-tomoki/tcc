@@ -7,10 +7,29 @@ void gen_lval(Node *node){
   if (node->kind != ND_VAR){
     error("not an lvalue");
   }
-
   printf("  mov rax, rbp\n");
   printf("  sub rax, %d\n", node->var->offset);
   printf("  push rax\n");
+}
+
+void gen_addr(Node *node){
+  switch (node->kind){
+    case ND_VAR:
+      printf("  lea rax, [rbp - %d]\n", node->var->offset);
+      printf("  push rax\n");
+      break;
+    case ND_DEREF:
+      gen(node->lhs);
+      break;
+    default:
+      error("not an lvalue");
+  }
+}
+
+void gen_stack_addr2value(){
+      printf("  pop rax\n");
+      printf("  mov rax, [rax]\n");
+      printf("  push rax\n");
 }
 
 int local_label_no(){
@@ -25,13 +44,11 @@ void gen(Node *node){
       printf("  push %d\n", node->val);
       return;
     case ND_VAR:
-      gen_lval(node);
-      printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
-      printf("  push rax\n");
+      gen_addr(node);
+      gen_stack_addr2value();
       return;
     case ND_ASSIGN:
-      gen_lval(node->lhs);
+      gen_addr(node->lhs);
       gen(node->rhs);
       printf("  pop rdi\n");
       printf("  pop rax\n");
@@ -119,21 +136,12 @@ void gen(Node *node){
     }
     // &hoge
     case ND_ADDR:
-      switch (node->lhs->kind){
-        case ND_VAR:
-          printf("  lea rax, [rbp - %d]\n", node->lhs->var->offset);
-          printf("  push rax\n");
-          break;
-        default:
-          error("invalid '&'");
-      }
+      gen_addr(node->lhs);
       return;
     // *hoge
     case ND_DEREF:
       gen_lval(node->lhs);
-      printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
-      printf("  push rax\n");
+      gen_stack_addr2value();
       return;
   }
 
