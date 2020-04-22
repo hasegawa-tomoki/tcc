@@ -221,12 +221,24 @@ Node *mul(){
 }
 
 // unary = ("+" | "-")* primary
+//      | "*" unary (= *hoge)
+//      | "&" unary (= &hoge)
 Node *unary(){
   if (consume("+")){
     return unary();
   }
   if (consume("-")){
     return new_node_with_lrs(ND_SUB, new_num_node(0), unary());
+  }
+  if (consume("*")){
+    Node *node = new_node(ND_DEREF);
+    node->lhs = unary();
+    return node;
+  }
+  if (consume("&")){
+    Node *node = new_node(ND_ADDR);
+    node->lhs = unary();
+    return node;
   }
   return primary();
 }

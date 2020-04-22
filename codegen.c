@@ -117,6 +117,21 @@ void gen(Node *node){
       printf("  push rax\n");
       return;
     }
+    // &hoge
+    case ND_ADDR:
+      switch (node->lhs->kind){
+        case ND_VAR:
+          printf("  lea rax, [rbp - %d]\n", node->lhs->var->offset);
+          printf("  push rax\n");
+          break;
+        default:
+          error("invalid '&'");
+      }
+      return;
+    // *hoge
+    case ND_DEREF:
+      gen_lval(node->lhs);
+      return;
   }
 
   gen(node->lhs);

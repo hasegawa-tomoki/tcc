@@ -19,6 +19,8 @@ char *node_name(int kind){
       "ND_FOR", 
       "ND_BLOCK", 
       "ND_FUNCCALL", 
+      "ND_ADDR",
+      "ND_DEREF",
     };
     return node_kinds[kind];
 }
