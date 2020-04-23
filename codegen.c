@@ -13,6 +13,7 @@ void gen_lval(Node *node){
 }
 
 void gen_addr(Node *node){
+  printf("# --- gen_addr %s\n", node_name(node->kind));
   switch (node->kind){
     case ND_VAR:
       printf("  lea rax, [rbp - %d]\n", node->var->offset);
@@ -38,8 +39,10 @@ int local_label_no(){
 }
 
 void gen(Node *node){
-  printf("# --- %s\n", node_name(node->kind));
+  printf("# --- gen %s\n", node_name(node->kind));
   switch (node->kind){
+    case ND_NULL:
+      return;
     case ND_NUM:
       printf("  push %d\n", node->val);
       return;
@@ -48,8 +51,11 @@ void gen(Node *node){
       gen_stack_addr2value();
       return;
     case ND_ASSIGN:
+      printf("# --- gen %s: lhs \n", node_name(node->kind));
       gen_addr(node->lhs);
+      printf("# --- gen %s: rhs \n", node_name(node->kind));
       gen(node->rhs);
+      printf("# --- gen %s: assign\n", node_name(node->kind));
       printf("  pop rdi\n");
       printf("  pop rax\n");
       printf("  mov [rax], rdi\n");
@@ -109,6 +115,7 @@ void gen(Node *node){
       }
       return;
     case ND_FUNCCALL: {
+      printf("# --- gen %s :args\n", node_name(node->kind));
       int argcnt = 0;
       for (Node *arg = node->args; arg; arg = arg->next){
         gen(arg);
@@ -117,6 +124,7 @@ void gen(Node *node){
       for (int i = argcnt - 1; i >= 0; i--){
         printf("  pop %s\n", argregs[i]);
       }
+      printf("# --- gen %s :call\n", node_name(node->kind));
 
       int label_no = local_label_no();
       printf("  mov rax, rsp\n");
@@ -155,8 +163,22 @@ void gen(Node *node){
     case ND_ADD:
       printf("  add rax, rdi\n");
       break;
+    case ND_PTR_ADD:
+      if (node->lhs->type->kind == TY_INT){
+        printf("  add rax, rdi * 4\n");
+      } else if (node->lhs->type->kind == TY_PTR){
+        printf("  add rax, rdi * 8\n");
+      }
+      break;
     case ND_SUB:
       printf("  sub rax, rdi\n");
+      break;
+    case ND_PTR_SUB:
+      if (node->lhs->type->kind == TY_INT){
+        printf("  sub rax, rdi * 4\n");
+      } else if (node->lhs->type->kind == TY_PTR){
+        printf("  sub rax, rdi * 8\n");
+      }
       break;
     case ND_MUL:
       printf("  imul rax, rdi\n");

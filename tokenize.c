@@ -81,7 +81,7 @@ bool is_alnum(char c) {
 
 char *starts_with_reserved(char *p){
   static char *kw[] = {
-    "return", "if", "else", "while", "for", "int", 
+    "return", "if", "else", "while", "for", "int", "sizeof", 
   };
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++){
     int len = strlen(kw[i]);

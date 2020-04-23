@@ -1,8 +1,48 @@
 #include "tcc.h"
 
-Node *code[100];
+//Node *code[100];
 
-// new_node* =============================
+void set_lhs(Node *node, Node *lhs){
+  node->lhs = lhs;
+  
+  switch (node->kind){
+    case ND_ADD:
+    case ND_SUB:
+    case ND_MUL:
+    case ND_DIV:
+    case ND_EQ:
+    case ND_NE:
+    case ND_LT:
+    case ND_LE:
+    case ND_FUNCCALL:
+    case ND_NUM:
+      node->type = new_type(TY_INT);
+      break;
+    case ND_PTR_ADD:
+    case ND_PTR_SUB:
+    case ND_ASSIGN:
+      node->type = node->lhs->type;
+      break;
+    case ND_VAR:
+      node->type = node->var->type;
+      break;
+    case ND_ADDR:
+      // chibicc のコミットではこうなっているけど、アドレス計算は TY_INT では？
+      //node->type = pointer_to(node->lhs->type);
+      node->type = new_type(TY_INT);
+      break;
+    case ND_DEREF:
+      if (node->lhs->type->kind != TY_PTR){
+        error("invalid pointer dereference.");
+      }
+      node->type = node->lhs->type->ptr_to;
+      break;
+  }
+}
+void set_rhs(Node *node, Node *rhs){
+  node->rhs = rhs;
+}
+
 Node *new_node(NodeKind kind){
   Node *node = calloc(1, sizeof(Node));
   node->kind = kind;
@@ -10,17 +50,58 @@ Node *new_node(NodeKind kind){
   return node;
 }
 
-Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs){
+Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs){
   Node *node = new_node(kind);
-  node->lhs = lhs;
-  node->rhs = rhs;
+  set_lhs(node, lhs);
+  set_rhs(node, rhs);
 
   return node;
+}
+
+Node *new_add_node(Node *lhs, Node *rhs){
+  if (! lhs->type){
+    show_node(lhs, "@new_add_node lhs", 0);
+    error("type not found in lhs");
+  }
+  if (! rhs->type){
+    show_node(rhs, "@new_add_node rhs", 0);
+    error("type not found in rhs");
+  }
+  if (lhs->type->kind == TY_INT && rhs->type->kind == TY_INT){
+    return new_lr_node(ND_ADD, lhs, rhs);
+  } else if (lhs->type->kind == TY_PTR && rhs->type->kind == TY_INT){
+    return new_lr_node(ND_PTR_ADD, lhs, rhs);
+  } else if (lhs->type->kind == TY_INT && rhs->type->kind == TY_PTR){
+    return new_lr_node(ND_PTR_ADD, rhs, lhs);
+  }
+  error_tok(token, "invalid operands");
+}
+
+Node *new_sub_node(Node *lhs, Node *rhs){
+  if (! lhs->type){
+    show_node(lhs, "@new_sub_node lhs", 0);
+    error("type not found in lhs");
+  }
+  if (! rhs->type){
+    show_node(rhs, "@new_sub_node rhs", 0);
+    error("type not found in rhs");
+  }
+  if (lhs->type->kind == TY_INT && lhs->type->kind == TY_INT){
+    return new_lr_node(ND_SUB, lhs, rhs);
+  } else if (lhs->type->kind == TY_PTR && lhs->type->kind == TY_INT){
+    return new_lr_node(ND_PTR_SUB, lhs, rhs);
+  } else if (lhs->type->kind == TY_INT && lhs->type->kind == TY_PTR){
+    return new_lr_node(ND_PTR_SUB, rhs, lhs);
+  }
+  show_node(lhs, "lhs", 0);
+  show_node(rhs, "rhs", 0);
+  error_tok(token, "Invalid operands");
 }
 
 Node *new_num_node(int val){
   Node *node = new_node(ND_NUM);
   node->val = val;
+  node->type = new_type(TY_INT);
 
   return node;
 }
@@ -28,10 +109,10 @@ Node *new_num_node(int val){
 Node *new_var_node(Var *var){
   Node *node = new_node(ND_VAR);
   node->var = var;
+  node->type = var->type;
   return node;
 }
 
-// other new* ============================
 Var *new_lvar(char *name, Type *type){
   Var *var = calloc(1, sizeof(Var));
   var->name = name;
@@ -48,10 +129,21 @@ Var *new_lvar(char *name, Type *type){
 Type *new_type(TypeKind kind){
   Type *type = calloc(1, sizeof(Type));
   type->kind = kind;
+
+  switch (kind){
+    case TY_INT:
+      type->size = 4;
+      break;
+    case TY_PTR:
+      type->size = 8;
+      break;
+    default:
+      error("Undefined type %d in new_type", kind);
+  }
+
   return type;
 }
 
-// other utils
 Type *pointer_to(Type *type){
   Type *ty = new_type(TY_PTR);
   ty->ptr_to = type;
@@ -89,7 +181,6 @@ VarList *read_func_params(){
 
   return head;
 }
-
 
 // program    = function*
 Function *program(){
@@ -143,7 +234,7 @@ Node *stmt(){
 
   if (consume("return")){
     node = new_node(ND_RETURN);
-    node->lhs = expr();
+    set_lhs(node, expr());
     expect(";");
     return node;
   }
@@ -197,8 +288,10 @@ Node *stmt(){
 
   if (peek("int")){
     Type *type = expect_type();
+    Token* token = consume_ident();
     Var *lvar = new_lvar(substr(token->str, token->len), type);
-    return new_var_node(lvar);
+    expect(";");
+    return new_node(ND_NULL);
   }
 
   node = expr();
@@ -215,7 +308,7 @@ Node *expr(){
 Node *assign(){
   Node *node = equality();
   if (consume("=")){
-    node = new_node_with_lrs(ND_ASSIGN, node, assign());
+    node = new_lr_node(ND_ASSIGN, node, assign());
   }
   return node;
 }
@@ -226,9 +319,9 @@ Node *equality (){
 
   for (;;){
     if (consume("==")){
-      node = new_node_with_lrs(ND_EQ, node, relational());
+      node = new_lr_node(ND_EQ, node, relational());
     } else if (consume("!=")){
-      node = new_node_with_lrs(ND_NE, node, relational());
+      node = new_lr_node(ND_NE, node, relational());
     } else {
       return node;
     }
@@ -241,13 +334,13 @@ Node *relational (){
 
   for (;;){
     if (consume("<=")){
-      node = new_node_with_lrs(ND_LE, node, add());
+      node = new_lr_node(ND_LE, node, add());
     } else if (consume("<")){
-      node = new_node_with_lrs(ND_LT, node, add());
+      node = new_lr_node(ND_LT, node, add());
     } else if (consume(">=")){
-      node = new_node_with_lrs(ND_LE, add(), node);
+      node = new_lr_node(ND_LE, add(), node);
     } else if (consume(">")){
-      node = new_node_with_lrs(ND_LT, add(), node);
+      node = new_lr_node(ND_LT, add(), node);
     } else {
       return node;
     }
@@ -257,12 +350,11 @@ Node *relational (){
 // add = mul ("+" mul | "-" mul)*
 Node *add(){
   Node *node = mul();
-
   for (;;){
     if (consume("+")){
-      node = new_node_with_lrs(ND_ADD, node, mul());
+      node = new_add_node(node, mul());
     } else if (consume("-")){
-      node = new_node_with_lrs(ND_SUB, node, mul());
+      node = new_sub_node(node, mul());
     } else {
       return node;
     }
@@ -275,9 +367,9 @@ Node *mul(){
   
   for (;;){
     if (consume("*")){
-      node = new_node_with_lrs(ND_MUL, node, unary());
+      node = new_lr_node(ND_MUL, node, unary());
     } else if (consume("/")){
-      node = new_node_with_lrs(ND_DIV, node, unary());
+      node = new_lr_node(ND_DIV, node, unary());
     } else {
       return node;
     }
@@ -287,22 +379,27 @@ Node *mul(){
 // unary = ("+" | "-")* primary
 //      | "*" unary (= *hoge)
 //      | "&" unary (= &hoge)
+//      | "sizeof" unary
 Node *unary(){
   if (consume("+")){
     return unary();
   }
   if (consume("-")){
-    return new_node_with_lrs(ND_SUB, new_num_node(0), unary());
+    return new_lr_node(ND_SUB, new_num_node(0), unary());
   }
   if (consume("*")){
     Node *node = new_node(ND_DEREF);
-    node->lhs = unary();
+    set_lhs(node, unary());
     return node;
   }
   if (consume("&")){
     Node *node = new_node(ND_ADDR);
-    node->lhs = unary();
+    set_lhs(node, unary());
     return node;
+  }
+  if (consume("sizeof")){
+    Node *n = unary();
+    return new_num_node(n->type->size);
   }
   return primary();
 }

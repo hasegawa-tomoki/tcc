@@ -4,7 +4,7 @@ assert() {
   input="$2"
 
   ./tcc "$input" > tmp.s
-  cc -o tmp test/func_noargs.o test/func_withargs.o tmp.s
+  cc -o tmp test/func_noargs.o test/func_withargs.o test/func_alloc4.o tmp.s
   chmod 755 tmp
   ./tmp
   actual="$?"
@@ -19,6 +19,9 @@ assert() {
 
 assert 0 "int main(){ return 0; }"
 assert 42 "int main(){ return 42; }"
+assert 25 "int main(){ return 5+20; }"
+assert 15 "int main(){ return 20-5; }"
+assert 29 "int main(){ return 5+20+4; }"
 assert 21 "int main(){ return 5+20-4; }"
 assert 41 "int main(){ return  12 + 34 - 5 ; }"
 assert 47 "int main(){ return 5+6*7; }"
@@ -39,6 +42,7 @@ assert 0 "int main(){ return 2<1; }"
 assert 1 "int main(){ return 2>1; }"
 assert 0 "int main(){ return 1>2; }"
 assert 2 "int main(){ return (1 > 2) + (2 > 1) + (1 == 1); }"
+assert 3 "int main(){ int a; a = 3; return a;}"
 assert 3 "int main(){ int a; return a = 3; }"
 assert 3 "int main(){ int ab; return ab = 3; }"
 assert 255 "int main(){ int ab; return ab = 255; }"
@@ -57,12 +61,16 @@ assert 3 "int main(){ int i; int a; for (i = 0; i < 10; i = i + 1){ a = 3; retur
 assert 10 "int main(){ return test(); } int test(){ return 10; }"
 assert 10 "int test(){ return 10; } int main(){ return test(); }"
 assert 8 "int main(){ int a; int b; a = 10; b = 20; return &b - &a; }"
-assert 20 "int main(){ int a; int b; int c; a = 10; b = 20; c = &b; return *b; }"
 assert 2 "int main(){ return test(2); } int test(int a){ return a; }"
 assert 5 "int main(){ return test(2, 3); } int test(int a, int b){ return a + b; }"
 assert 1 "int main(){ int *a; return 1; }"
 assert 1 "int main(){ int **a; return 1; }"
-assert 1 "int *main(){ int **a; return 1; }"
 assert 3 "int main(){ int x; int *y; y = &x; *y = 3; return x; }"
+# assert 1 "int main(){ int *p; p = func_alloc4(1, 2, 3, 4); return *p; }"
+# assert 4 "int main(){ int *p; p = func_alloc4(1, 2, 3, 4); int *q; q = p + 2; return *q; }"
+assert 4 "int main(){ int p; return sizeof(p); }"
+assert 4 "int main(){ int p; return sizeof p; }"
+assert 8 "int main(){ int *p; return sizeof(p); }"
+assert 8 "int main(){ int *p; return sizeof p; }"
 
 echo OK

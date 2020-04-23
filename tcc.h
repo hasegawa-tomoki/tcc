@@ -5,12 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// util.c
-
-void error(char *fmt, ...);
-void error_at(char *loc, char *fmt, ...);
-char *substr(char *src, int len);
-
 // tokenize.c
 
 typedef enum {
@@ -18,6 +12,7 @@ typedef enum {
   TK_RETURN,
   TK_IDENT, 
   TK_NUM,
+  TK_SIZEOF, 
   TK_EOF,
 } TokenKind;
 
@@ -35,10 +30,12 @@ typedef enum {
   TY_PTR, 
 } TypeKind;
 
+
 typedef struct Type Type;
 struct Type {
   TypeKind kind;
   Type *ptr_to;
+  int size;
 };
 
 typedef struct Var Var;
@@ -75,7 +72,9 @@ Token *tokenize();
 
 typedef enum {
   ND_ADD, // +
+  ND_PTR_ADD, 
   ND_SUB, // -
+  ND_PTR_SUB, 
   ND_MUL, // *
   ND_DIV, // /
   ND_EQ,  // == 
@@ -93,12 +92,14 @@ typedef enum {
   ND_FUNCCALL, 
   ND_ADDR, // address &
   ND_DEREF, // deference *
+  ND_NULL, 
 } NodeKind;
 
 typedef struct Node Node;
 struct Node {
   NodeKind kind;
   Node *next;
+  Type *type;
 
   // Left/right hand side
   Node *lhs;
@@ -133,11 +134,12 @@ struct Function {
   int stack_size;
 };
 
-extern Node *code[100];
-
 Node *new_node(NodeKind kind);
-Node *new_node_with_lrs(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_num_node(int val);
+
+Type *new_type(TypeKind kind);
+Type *pointer_to(Type *type);
 
 Function *program();
 Function *function();
@@ -169,3 +171,11 @@ void show_token(Token *tok);
 void show_tokens(Token *tok);
 void show_variable(VarList *var_list);
 void show_variables(VarList *var_list);
+
+// util.c
+
+void error(char *fmt, ...);
+void error_at(char *loc, char *fmt, ...);
+void error_tok(Token *tok, char *fmt, ...);
+char *substr(char *src, int len);
+void debug(char *fmt, ...);

@@ -21,8 +21,21 @@ void error_at(char *loc, char *fmt, ...){
   exit(1);
 }
 
+void error_tok(Token *tok, char *fmt, ...){
+  va_list ap;
+  va_start(ap, fmt);
+  error_at(tok->str, fmt, ap);
+}
+
 char *substr(char *src, int len){
   char *name = calloc(len, sizeof(char));
   strncpy(name, src, len);
   return name;
+}
+
+void debug(char *fmt, ...){
+  va_list ap;
+  va_start(ap, fmt);
+  vfprintf(stderr, fmt, ap);
+  fprintf(stderr, "\n");
 }
