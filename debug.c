@@ -49,31 +49,39 @@ char *type_name(int kind){
   return type_kinds[kind];
 }
 
+char *node2str(Node *node){
+  char *str = calloc(512, sizeof(char));
+
+  sprintf(str, "kind: %-10s", node_name(node->kind));
+  if (node->kind == ND_VAR){
+    sprintf(str, "%s  name: %s", str, node->var->name);
+    sprintf(str, "%s  offset: %d", str, node->var->offset);
+  }
+  if (node->kind == ND_NUM){
+    sprintf(str, "%s  val: %d", str, node->val);
+  }
+  if (node->kind == ND_FUNCCALL){
+    sprintf(str, "%s  funcname: %s", str, node->funcname);
+  }
+  if (node->type){
+    Type *type = node->type;
+    sprintf(str, "%s  type: %s", str, type_name(type->kind));
+    while (type->kind == TY_PTR || type->kind == TY_ARRAY){
+      type = type->ptr_to;
+      sprintf(str, "%s -> %s", str, type_name(type->kind));
+    }
+  }
+  
+  return str;
+}
+
 void show_node(Node *node, char *name, int indent){
     for (int i = 0; i < (indent + 1) * 2; i++){
       fprintf(stderr, " ");
     }
 
-    fprintf(stderr, "-- %s  kind: %-20s  ", name, node_name(node->kind));
-    if (node->kind == ND_VAR){
-      fprintf(stderr, "  name: %s", node->var->name);
-      fprintf(stderr, "  offset: %d", node->var->offset);
-    }
-    if (node->kind == ND_NUM){
-      fprintf(stderr, "  val: %d", node->val);
-    }
-    if (node->kind == ND_FUNCCALL){
-      fprintf(stderr, "  funcname: %s", node->funcname);
-    }
-    if (node->type){
-      Type *type = node->type;
-      fprintf(stderr, "  type: %s", type_name(type->kind));
-      while (type->kind == TY_PTR || type->kind == TY_ARRAY){
-        type = type->ptr_to;
-        fprintf(stderr, " -> %s", type_name(type->kind));
-      }
-    }
-    fprintf(stderr, "\n");
+    fprintf(stderr, "-- %s  %s\n", name, node2str(node));
+
     if (node->lhs){
       show_node(node->lhs, "lhs ", indent + 1);
     }

@@ -40,14 +40,3 @@ void debug(char *fmt, ...){
   fprintf(stderr, "\n");
 }
 
-void asmcomment(char *fmt, ...){
-  bool debug = false;
-
-  va_list ap;
-  va_start(ap, fmt);
-  if (debug){
-    vfprintf(stderr, fmt, ap);
-  } else {
-    vfprintf(stdout, fmt, ap);
-  }
-}

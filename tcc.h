@@ -162,11 +162,20 @@ Var *find_lvar(Token *tok);
 
 // codegen.c
 
+void asmcomment(char *fmt, ...);
+void gen_lval(Node *node);
+void gen_addr(Node *node);
+void gen_stack_addr2value();
+int local_label_no();
 void gen(Node *node);
 void codegen(Function *prog);
 
 // debug.c
 
+char *token_name(int kind);
+char *node_name(int kind);
+char *type_name(int kind);
+char *node2str(Node *node);
 void show_node(Node *node, char *name, int indent);
 void show_nodes(Function *prog);
 void show_token(Token *tok);
@@ -181,4 +190,3 @@ void error_at(char *loc, char *fmt, ...);
 void error_tok(Token *tok, char *fmt, ...);
 char *substr(char *src, int len);
 void debug(char *fmt, ...);
-void asmcomment(char *fmt, ...);

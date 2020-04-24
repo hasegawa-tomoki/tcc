@@ -2,17 +2,40 @@
 
 static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static char *funcname;
+static int indent;
+
+void asmcomment(char *fmt, ...){
+  bool debug = false;
+
+  va_list ap;
+  va_start(ap, fmt);
+  if (debug){
+    for (int i = 0; i < (indent + 1) * 2; i++){
+      fprintf(stderr, " ");
+    }
+    vfprintf(stderr, fmt, ap);
+  } else {
+    for (int i = 0; i < (indent + 1) * 2; i++){
+      fprintf(stdout, " ");
+    }
+    vfprintf(stdout, fmt, ap);
+  }
+}
 
 void gen_lval(Node *node){
+  indent++;
+  asmcomment("# --- gen_lval start %s\n", node2str(node));
   if (node->kind == TY_ARRAY){
-    show_node(node, "gen_lval", 0);
+    //show_node(node, "gen_lval", 0);
     error("not an lvalue");
   }
   gen_addr(node);
+  indent--;
 }
 
 void gen_addr(Node *node){
-  asmcomment("# --- gen_addr %s\n", node_name(node->kind));
+  indent++;
+  asmcomment("# --- gen_addr start %s\n", node2str(node));
   switch (node->kind){
     case ND_VAR:
       printf("  lea rax, [rbp - %d]\n", node->var->offset);
@@ -24,13 +47,16 @@ void gen_addr(Node *node){
     default:
       error("not an lvalue");
   }
+  indent--;
 }
 
 void gen_stack_addr2value(){
+  indent++;
   asmcomment("# --- gen_stack_addr2value\n");
   printf("  pop rax\n");
   printf("  mov rax, [rax]\n");
   printf("  push rax\n");
+  indent--;
 }
 
 int local_label_no(){
@@ -39,34 +65,46 @@ int local_label_no(){
 }
 
 void gen(Node *node){
-  asmcomment("# --- gen %s\n", node_name(node->kind));
+  asmcomment("# --- gen start %s\n", node2str(node));
   switch (node->kind){
     case ND_NULL:
+      asmcomment("# --- gen end   kind: %s\n", node_name(node->kind));
       return;
     case ND_NUM:
       printf("  push %d\n", node->val);
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     case ND_VAR:
       gen_addr(node);
       if (node->type->kind != TY_ARRAY){
         gen_stack_addr2value();
       }
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     case ND_ASSIGN:
-      asmcomment("  # --- gen %s: lhs \n", node_name(node->kind));
+      indent++;
+      asmcomment("# --- gen %s: lhs \n", node_name(node->kind));
       gen_lval(node->lhs);
-      asmcomment("  # --- gen %s: rhs \n", node_name(node->kind));
+      asmcomment("# --- gen %s: rhs \n", node_name(node->kind));
+      indent++;
       gen(node->rhs);
-      asmcomment("  # --- gen %s: assign\n", node_name(node->kind));
+      indent--;
+      asmcomment("# --- gen %s: assign\n", node_name(node->kind));
       printf("  pop rdi\n");
       printf("  pop rax\n");
       printf("  mov [rax], rdi\n");
       printf("  push rdi\n");
+      indent--;
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     case ND_RETURN:
+      indent++;
       gen(node->lhs);
+      asmcomment("# --- gen %s: return\n", node_name(node->kind));
       printf("  pop rax\n");
       printf("  jmp .Lreturn.%s\n", funcname);
+      indent--;
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     case ND_IF: {
       int label_no = local_label_no();
@@ -84,6 +122,7 @@ void gen(Node *node){
         gen(node->then);
       }
       printf(".Lend_%d:\n", label_no);
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     }
     case ND_WHILE: {
@@ -96,6 +135,7 @@ void gen(Node *node){
       gen(node->then);
       printf("  jmp .Lbegin_%d\n", label_no);
       printf(".Lend_%d:\n", label_no);
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     }
     case ND_FOR: {
@@ -109,12 +149,14 @@ void gen(Node *node){
       gen(node->then);
       gen(node->iterate);
       printf(".Lend_%d:\n", label_no);
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     }
     case ND_BLOCK:
       for (Node *n = node->body; n; n = n->next){
         gen(n);
       }
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     case ND_FUNCCALL: {
       asmcomment("# --- gen %s :args\n", node_name(node->kind));
@@ -142,18 +184,21 @@ void gen(Node *node){
       printf("  add rsp, 8\n");
       printf(".Lend_%d:\n", label_no);
       printf("  push rax\n");
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
     }
     // &hoge
     case ND_ADDR:
       gen_addr(node->lhs);
       return;
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
     // *hoge
     case ND_DEREF:
       gen(node->lhs);
       if (node->type->kind != TY_ARRAY){
         gen_stack_addr2value();
       }
+      asmcomment("# --- gen end %s\n", node_name(node->kind));
       return;
   }
 
@@ -208,6 +253,7 @@ void gen(Node *node){
 
 void codegen(Function *prog){
   printf(".intel_syntax noprefix\n");
+  indent = 0;
 
   for (Function *fn = prog; fn; fn = fn->next){
     funcname = fn->name;
