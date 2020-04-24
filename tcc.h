@@ -28,6 +28,7 @@ struct Token {
 typedef enum {
   TY_INT, 
   TY_PTR, 
+  TY_ARRAY, 
 } TypeKind;
 
 
@@ -36,6 +37,7 @@ struct Type {
   TypeKind kind;
   Type *ptr_to;
   int size;
+  int array_len;
 };
 
 typedef struct Var Var;
@@ -179,3 +181,4 @@ void error_at(char *loc, char *fmt, ...);
 void error_tok(Token *tok, char *fmt, ...);
 char *substr(char *src, int len);
 void debug(char *fmt, ...);
+void asmcomment(char *fmt, ...);

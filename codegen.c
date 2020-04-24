@@ -4,16 +4,15 @@ static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static char *funcname;
 
 void gen_lval(Node *node){
-  if (node->kind != ND_VAR){
+  if (node->kind == TY_ARRAY){
+    show_node(node, "gen_lval", 0);
     error("not an lvalue");
   }
-  printf("  mov rax, rbp\n");
-  printf("  sub rax, %d\n", node->var->offset);
-  printf("  push rax\n");
+  gen_addr(node);
 }
 
 void gen_addr(Node *node){
-  printf("# --- gen_addr %s\n", node_name(node->kind));
+  asmcomment("# --- gen_addr %s\n", node_name(node->kind));
   switch (node->kind){
     case ND_VAR:
       printf("  lea rax, [rbp - %d]\n", node->var->offset);
@@ -28,9 +27,10 @@ void gen_addr(Node *node){
 }
 
 void gen_stack_addr2value(){
-      printf("  pop rax\n");
-      printf("  mov rax, [rax]\n");
-      printf("  push rax\n");
+  asmcomment("# --- gen_stack_addr2value\n");
+  printf("  pop rax\n");
+  printf("  mov rax, [rax]\n");
+  printf("  push rax\n");
 }
 
 int local_label_no(){
@@ -39,7 +39,7 @@ int local_label_no(){
 }
 
 void gen(Node *node){
-  printf("# --- gen %s\n", node_name(node->kind));
+  asmcomment("# --- gen %s\n", node_name(node->kind));
   switch (node->kind){
     case ND_NULL:
       return;
@@ -48,14 +48,16 @@ void gen(Node *node){
       return;
     case ND_VAR:
       gen_addr(node);
-      gen_stack_addr2value();
+      if (node->type->kind != TY_ARRAY){
+        gen_stack_addr2value();
+      }
       return;
     case ND_ASSIGN:
-      printf("# --- gen %s: lhs \n", node_name(node->kind));
-      gen_addr(node->lhs);
-      printf("# --- gen %s: rhs \n", node_name(node->kind));
+      asmcomment("  # --- gen %s: lhs \n", node_name(node->kind));
+      gen_lval(node->lhs);
+      asmcomment("  # --- gen %s: rhs \n", node_name(node->kind));
       gen(node->rhs);
-      printf("# --- gen %s: assign\n", node_name(node->kind));
+      asmcomment("  # --- gen %s: assign\n", node_name(node->kind));
       printf("  pop rdi\n");
       printf("  pop rax\n");
       printf("  mov [rax], rdi\n");
@@ -115,7 +117,7 @@ void gen(Node *node){
       }
       return;
     case ND_FUNCCALL: {
-      printf("# --- gen %s :args\n", node_name(node->kind));
+      asmcomment("# --- gen %s :args\n", node_name(node->kind));
       int argcnt = 0;
       for (Node *arg = node->args; arg; arg = arg->next){
         gen(arg);
@@ -124,7 +126,7 @@ void gen(Node *node){
       for (int i = argcnt - 1; i >= 0; i--){
         printf("  pop %s\n", argregs[i]);
       }
-      printf("# --- gen %s :call\n", node_name(node->kind));
+      asmcomment("# --- gen %s :call\n", node_name(node->kind));
 
       int label_no = local_label_no();
       printf("  mov rax, rsp\n");
@@ -148,8 +150,10 @@ void gen(Node *node){
       return;
     // *hoge
     case ND_DEREF:
-      gen_lval(node->lhs);
-      gen_stack_addr2value();
+      gen(node->lhs);
+      if (node->type->kind != TY_ARRAY){
+        gen_stack_addr2value();
+      }
       return;
   }
 
@@ -164,21 +168,15 @@ void gen(Node *node){
       printf("  add rax, rdi\n");
       break;
     case ND_PTR_ADD:
-      if (node->lhs->type->kind == TY_INT){
-        printf("  add rax, rdi * 4\n");
-      } else if (node->lhs->type->kind == TY_PTR){
-        printf("  add rax, rdi * 8\n");
-      }
+      printf("  imul rdi, %d\n", node->lhs->type->ptr_to->size);
+      printf("  add rax, rdi\n");
       break;
     case ND_SUB:
       printf("  sub rax, rdi\n");
       break;
     case ND_PTR_SUB:
-      if (node->lhs->type->kind == TY_INT){
-        printf("  sub rax, rdi * 4\n");
-      } else if (node->lhs->type->kind == TY_PTR){
-        printf("  sub rax, rdi * 8\n");
-      }
+      printf("  imul rdi, %d\n", node->lhs->type->ptr_to->size);
+      printf("  sub rax, rdi\n");
       break;
     case ND_MUL:
       printf("  imul rax, rdi\n");
@@ -218,7 +216,7 @@ void codegen(Function *prog){
     printf("%s:\n", fn->name);
 
     // prologue
-    printf("# --- prologue\n");
+    asmcomment("# --- prologue\n");
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
     printf("  sub rsp, %d\n", fn->stack_size);
@@ -228,7 +226,7 @@ void codegen(Function *prog){
       printf("  mov [rbp - %d], %s\n", vl->var->offset, argregs[idx]);
       idx++;
     }
-    printf("# --- \n\n");
+    asmcomment("# --- \n\n");
 
     for (Node *node = fn->node; node; node = node->next){
       gen(node);
@@ -236,10 +234,10 @@ void codegen(Function *prog){
 
     // epilogue
     printf(".Lreturn.%s:\n", fn->name);
-    printf("# --- epilogue\n");
+    asmcomment("# --- epilogue\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp;\n");
     printf("  ret\n");
-    printf("# --- \n\n");
+    asmcomment("# --- \n\n");
   }
 }

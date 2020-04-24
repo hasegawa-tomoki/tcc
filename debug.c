@@ -44,6 +44,7 @@ char *type_name(int kind){
   static char *type_kinds[] = {
     "TY_INT", 
     "TY_PTR", 
+    "TY_ARRAY", 
   };
   return type_kinds[kind];
 }
@@ -65,7 +66,12 @@ void show_node(Node *node, char *name, int indent){
       fprintf(stderr, "  funcname: %s", node->funcname);
     }
     if (node->type){
-      fprintf(stderr, "  type: %s", type_name(node->type->kind));
+      Type *type = node->type;
+      fprintf(stderr, "  type: %s", type_name(type->kind));
+      while (type->kind == TY_PTR || type->kind == TY_ARRAY){
+        type = type->ptr_to;
+        fprintf(stderr, " -> %s", type_name(type->kind));
+      }
     }
     fprintf(stderr, "\n");
     if (node->lhs){
@@ -129,8 +135,10 @@ void show_tokens(Token *token){
 
 void show_variable(VarList *var_list){
   Type *type = var_list->var->type;
-  fprintf(stderr, "  -- variable  name: %s  offset: %d  type: %s", var_list->var->name, var_list->var->offset, type_name(type->kind));
-  while (type->kind == TY_PTR){
+  fprintf(stderr, "  -- variable  name: %s  offset: %d  ", var_list->var->name, var_list->var->offset);
+  fprintf(stderr, "size: %d  ", type->size);
+  fprintf(stderr, "type: %s", type_name(type->kind));
+  while (type->kind == TY_PTR || type->kind == TY_ARRAY){
     type = type->ptr_to;
     fprintf(stderr, " -> %s", type_name(type->kind));
   }

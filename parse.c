@@ -32,7 +32,7 @@ void set_lhs(Node *node, Node *lhs){
       node->type = new_type(TY_INT);
       break;
     case ND_DEREF:
-      if (node->lhs->type->kind != TY_PTR){
+      if (! node->lhs->type->ptr_to){
         error("invalid pointer dereference.");
       }
       node->type = node->lhs->type->ptr_to;
@@ -69,9 +69,9 @@ Node *new_add_node(Node *lhs, Node *rhs){
   }
   if (lhs->type->kind == TY_INT && rhs->type->kind == TY_INT){
     return new_lr_node(ND_ADD, lhs, rhs);
-  } else if (lhs->type->kind == TY_PTR && rhs->type->kind == TY_INT){
+  } else if (lhs->type->ptr_to && rhs->type->kind == TY_INT){
     return new_lr_node(ND_PTR_ADD, lhs, rhs);
-  } else if (lhs->type->kind == TY_INT && rhs->type->kind == TY_PTR){
+  } else if (lhs->type->kind == TY_INT && rhs->type->ptr_to){
     return new_lr_node(ND_PTR_ADD, rhs, lhs);
   }
   error_tok(token, "invalid operands");
@@ -86,11 +86,11 @@ Node *new_sub_node(Node *lhs, Node *rhs){
     show_node(rhs, "@new_sub_node rhs", 0);
     error("type not found in rhs");
   }
-  if (lhs->type->kind == TY_INT && lhs->type->kind == TY_INT){
+  if (lhs->type->kind == TY_INT && rhs->type->kind == TY_INT){
     return new_lr_node(ND_SUB, lhs, rhs);
-  } else if (lhs->type->kind == TY_PTR && lhs->type->kind == TY_INT){
+  } else if (lhs->type->ptr_to && rhs->type->kind == TY_INT){
     return new_lr_node(ND_PTR_SUB, lhs, rhs);
-  } else if (lhs->type->kind == TY_INT && lhs->type->kind == TY_PTR){
+  } else if (lhs->type->kind == TY_INT && rhs->type->ptr_to){
     return new_lr_node(ND_PTR_SUB, rhs, lhs);
   }
   show_node(lhs, "lhs", 0);
@@ -113,16 +113,32 @@ Node *new_var_node(Var *var){
   return node;
 }
 
-Var *new_lvar(char *name, Type *type){
-  Var *var = calloc(1, sizeof(Var));
-  var->name = name;
-  var->type = type;
-
+void add_var2locals(Var *var){
   VarList *vl = calloc(1, sizeof(VarList));
   vl->var = var;
   vl->next = locals;
   locals = vl;
+}
 
+Var *new_var(char *name, Type *type){
+  Var *var = calloc(1, sizeof(Var));
+  var->name = name;
+  var->type = type;
+
+  add_var2locals(var);
+  return var;
+}
+
+Var *new_array(char *name, Type *type, int array_len){
+  Var *var = calloc(1, sizeof(Var));
+  var->name = name;
+  Type *arr_type = new_type(TY_ARRAY);
+  arr_type->ptr_to = type;
+  arr_type->array_len = array_len;
+  arr_type->size = type->size * array_len;
+  var->type = arr_type;
+  
+  add_var2locals(var);
   return var;
 }
 
@@ -132,10 +148,12 @@ Type *new_type(TypeKind kind){
 
   switch (kind){
     case TY_INT:
-      type->size = 4;
+      type->size = 8;
       break;
     case TY_PTR:
       type->size = 8;
+      break;
+    case TY_ARRAY:
       break;
     default:
       error("Undefined type %d in new_type", kind);
@@ -162,7 +180,7 @@ Type *expect_type(){
 VarList *read_func_param(){
     VarList *vl = calloc(1, sizeof(VarList));
     Type *type = expect_type();
-    vl->var = new_lvar(expect_ident(), type);
+    vl->var = new_var(expect_ident(), type);
     return vl;
 }
 
@@ -289,7 +307,14 @@ Node *stmt(){
   if (peek("int")){
     Type *type = expect_type();
     Token* token = consume_ident();
-    Var *lvar = new_lvar(substr(token->str, token->len), type);
+    char *var_name = substr(token->str, token->len);
+    if (consume("[")){
+      // array
+      new_array(var_name, type, expect_number());
+      expect("]");
+    } else {
+      new_var(var_name, type);
+    }
     expect(";");
     return new_node(ND_NULL);
   }
