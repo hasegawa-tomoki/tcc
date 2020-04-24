@@ -162,7 +162,7 @@ Var *find_lvar(Token *tok);
 
 // codegen.c
 
-void asmcomment(char *fmt, ...);
+void asmc(char *fmt, ...);
 void gen_lval(Node *node);
 void gen_addr(Node *node);
 void gen_stack_addr2value();

@@ -52,25 +52,26 @@ char *type_name(int kind){
 char *node2str(Node *node){
   char *str = calloc(512, sizeof(char));
 
-  sprintf(str, "kind: %-10s", node_name(node->kind));
+  sprintf(str, "%s (", node_name(node->kind));
   if (node->kind == ND_VAR){
-    sprintf(str, "%s  name: %s", str, node->var->name);
-    sprintf(str, "%s  offset: %d", str, node->var->offset);
+    sprintf(str, "%s name: %s", str, node->var->name);
+    sprintf(str, "%s offset: %d", str, node->var->offset);
   }
   if (node->kind == ND_NUM){
-    sprintf(str, "%s  val: %d", str, node->val);
+    sprintf(str, "%s val: %d", str, node->val);
   }
   if (node->kind == ND_FUNCCALL){
-    sprintf(str, "%s  funcname: %s", str, node->funcname);
+    sprintf(str, "%s funcname: %s", str, node->funcname);
   }
   if (node->type){
     Type *type = node->type;
-    sprintf(str, "%s  type: %s", str, type_name(type->kind));
+    sprintf(str, "%s type: %s", str, type_name(type->kind));
     while (type->kind == TY_PTR || type->kind == TY_ARRAY){
       type = type->ptr_to;
       sprintf(str, "%s -> %s", str, type_name(type->kind));
     }
   }
+  sprintf(str, "%s )", str);
   
   return str;
 }
