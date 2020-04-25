@@ -54,14 +54,14 @@ char *node2str(Node *node){
 
   sprintf(str, "%s (", node_name(node->kind));
   if (node->kind == ND_VAR){
-    sprintf(str, "%s name: %s", str, node->var->name);
-    sprintf(str, "%s offset: %d", str, node->var->offset);
+    sprintf(str, "%s name: %s,", str, node->var->name);
+    sprintf(str, "%s offset: %d,", str, node->var->offset);
   }
   if (node->kind == ND_NUM){
-    sprintf(str, "%s val: %d", str, node->val);
+    sprintf(str, "%s val: %d,", str, node->val);
   }
   if (node->kind == ND_FUNCCALL){
-    sprintf(str, "%s funcname: %s", str, node->funcname);
+    sprintf(str, "%s funcname: %s,", str, node->funcname);
   }
   if (node->type){
     Type *type = node->type;
@@ -70,6 +70,7 @@ char *node2str(Node *node){
       type = type->ptr_to;
       sprintf(str, "%s -> %s", str, type_name(type->kind));
     }
+    sprintf(str, "%s,", str);
   }
   sprintf(str, "%s )", str);
   

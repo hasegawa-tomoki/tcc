@@ -1,118 +1,5 @@
 #include "tcc.h"
 
-//Node *code[100];
-
-void set_lhs(Node *node, Node *lhs){
-  node->lhs = lhs;
-  
-  switch (node->kind){
-    case ND_ADD:
-    case ND_SUB:
-    case ND_MUL:
-    case ND_DIV:
-    case ND_EQ:
-    case ND_NE:
-    case ND_LT:
-    case ND_LE:
-    case ND_FUNCCALL:
-    case ND_NUM:
-      node->type = new_type(TY_INT);
-      break;
-    case ND_PTR_ADD:
-    case ND_PTR_SUB:
-    case ND_ASSIGN:
-      node->type = node->lhs->type;
-      break;
-    case ND_VAR:
-      node->type = node->var->type;
-      break;
-    case ND_ADDR:
-      // chibicc のコミットではこうなっているけど、アドレス計算は TY_INT では？
-      //node->type = pointer_to(node->lhs->type);
-      node->type = new_type(TY_INT);
-      break;
-    case ND_DEREF:
-      if (! node->lhs->type->ptr_to){
-        error("invalid pointer dereference.");
-      }
-      node->type = node->lhs->type->ptr_to;
-      break;
-  }
-}
-void set_rhs(Node *node, Node *rhs){
-  node->rhs = rhs;
-}
-
-Node *new_node(NodeKind kind){
-  Node *node = calloc(1, sizeof(Node));
-  node->kind = kind;
-
-  return node;
-}
-
-Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs){
-  Node *node = new_node(kind);
-  set_lhs(node, lhs);
-  set_rhs(node, rhs);
-
-  return node;
-}
-
-Node *new_add_node(Node *lhs, Node *rhs){
-  if (! lhs->type){
-    show_node(lhs, "@new_add_node lhs", 0);
-    error("type not found in lhs");
-  }
-  if (! rhs->type){
-    show_node(rhs, "@new_add_node rhs", 0);
-    error("type not found in rhs");
-  }
-  if (lhs->type->kind == TY_INT && rhs->type->kind == TY_INT){
-    return new_lr_node(ND_ADD, lhs, rhs);
-  } else if (lhs->type->ptr_to && rhs->type->kind == TY_INT){
-    return new_lr_node(ND_PTR_ADD, lhs, rhs);
-  } else if (lhs->type->kind == TY_INT && rhs->type->ptr_to){
-    return new_lr_node(ND_PTR_ADD, rhs, lhs);
-  }
-  error_tok(token, "invalid operands");
-}
-
-Node *new_sub_node(Node *lhs, Node *rhs){
-  if (! lhs->type){
-    show_node(lhs, "@new_sub_node lhs", 0);
-    error("type not found in lhs");
-  }
-  if (! rhs->type){
-    show_node(rhs, "@new_sub_node rhs", 0);
-    error("type not found in rhs");
-  }
-  if (lhs->type->kind == TY_INT && rhs->type->kind == TY_INT){
-    return new_lr_node(ND_SUB, lhs, rhs);
-  } else if (lhs->type->ptr_to && rhs->type->kind == TY_INT){
-    return new_lr_node(ND_PTR_SUB, lhs, rhs);
-  } else if (lhs->type->kind == TY_INT && rhs->type->ptr_to){
-    return new_lr_node(ND_PTR_SUB, rhs, lhs);
-  }
-  show_node(lhs, "lhs", 0);
-  show_node(rhs, "rhs", 0);
-  error_tok(token, "Invalid operands");
-}
-
-Node *new_num_node(int val){
-  Node *node = new_node(ND_NUM);
-  node->val = val;
-  node->type = new_type(TY_INT);
-
-  return node;
-}
-
-Node *new_var_node(Var *var){
-  Node *node = new_node(ND_VAR);
-  node->var = var;
-  node->type = var->type;
-  return node;
-}
-
 void add_var2locals(Var *var){
   VarList *vl = calloc(1, sizeof(VarList));
   vl->var = var;
@@ -129,14 +16,10 @@ Var *new_var(char *name, Type *type){
   return var;
 }
 
-Var *new_array(char *name, Type *type, int array_len){
+Var *new_array(char *name, Type *type){
   Var *var = calloc(1, sizeof(Var));
   var->name = name;
-  Type *arr_type = new_type(TY_ARRAY);
-  arr_type->ptr_to = type;
-  arr_type->array_len = array_len;
-  arr_type->size = type->size * array_len;
-  var->type = arr_type;
+  var->type = type;
   
   add_var2locals(var);
   return var;
@@ -308,10 +191,18 @@ Node *stmt(){
     Type *type = expect_type();
     Token* token = consume_ident();
     char *var_name = substr(token->str, token->len);
-    if (consume("[")){
+    if (peek("[")){
       // array
-      new_array(var_name, type, expect_number());
-      expect("]");
+      while(consume("[")){
+        int length = expect_number();
+        Type *arr = new_type(TY_ARRAY);
+        arr->array_len = length;
+        arr->size = length * type->size;
+        arr->ptr_to = type;
+        type = arr;
+        expect("]");
+      }
+      new_array(var_name, type);
     } else {
       new_var(var_name, type);
     }
@@ -401,10 +292,10 @@ Node *mul(){
   }
 }
 
-// unary = ("+" | "-")* primary
-//      | "*" unary (= *hoge)
-//      | "&" unary (= &hoge)
+// unary = ("+" | "-")* unary
+//      | ("*" | "&") unary (= *hoge, &hoge)
 //      | "sizeof" unary
+//      | postfix
 Node *unary(){
   if (consume("+")){
     return unary();
@@ -426,7 +317,20 @@ Node *unary(){
     Node *n = unary();
     return new_num_node(n->type->size);
   }
-  return primary();
+  return postfix();
+}
+
+// postfix = primary ("[" expr "]")*
+Node *postfix(){
+  Node *node = primary();
+
+  // x[y] = *(x + y)
+  while(consume("[")){
+    Node *exp = new_add_node(node, expr());
+    expect("]");
+    node = new_deref_node(exp);
+  }
+  return node;
 }
 
 // primary    = num

@@ -70,7 +70,7 @@ bool is_alpha(char c);
 bool is_alnum(char c);
 Token *tokenize();
 
-// parse.c
+// node.c
 
 typedef enum {
   ND_ADD, // +
@@ -102,6 +102,7 @@ struct Node {
   NodeKind kind;
   Node *next;
   Type *type;
+  Token *token;
 
   // Left/right hand side
   Node *lhs;
@@ -125,6 +126,18 @@ struct Node {
   Node *args;
 };
 
+void set_lhs(Node *node, Node *lhs);
+void set_rhs(Node *node, Node *rhs);
+Node *new_node(NodeKind kind);
+Node *new_deref_node(Node *lhs);
+Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs);
+Node *new_add_node(Node *lhs, Node *rhs);
+Node *new_sub_node(Node *lhs, Node *rhs);
+Node *new_num_node(int val);
+Node *new_var_node(Var *var);
+
+// parse.c
+
 typedef struct Function Function;
 struct Function {
   Function *next;
@@ -135,10 +148,6 @@ struct Function {
   VarList *locals;
   int stack_size;
 };
-
-Node *new_node(NodeKind kind);
-Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_num_node(int val);
 
 Type *new_type(TypeKind kind);
 Type *pointer_to(Type *type);
@@ -153,6 +162,7 @@ Node *relational();
 Node *add();
 Node *mul();
 Node *unary();
+Node *postfix();
 Node *primary();
 char *node_name(int kind);
 

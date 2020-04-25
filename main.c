@@ -19,9 +19,9 @@ int main(int argc, char **argv){
       vl->var->offset = offset;
     }
     fn->stack_size = offset;
-    show_variables(fn->locals);
+    //show_variables(fn->locals);
   }
-  show_nodes(prog);
+  //show_nodes(prog);
 
   codegen(prog);
 

@@ -331,6 +331,7 @@ void codegen(Function *prog){
     funcname = fn->name;
 
     printf(".global %s\n", fn->name);
+    printf("# %s\n\n", user_input);
     printf("%s:\n", fn->name);
 
     // prologue
