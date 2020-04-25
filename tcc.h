@@ -149,8 +149,18 @@ struct Function {
   int stack_size;
 };
 
+void add_var2locals(Var *var);
+void add_var2globals(Var *var);
+
+Var *new_var(char *name, Type *type);
+Var *new_array(char *name, Type *type);
+
 Type *new_type(TypeKind kind);
 Type *pointer_to(Type *type);
+Type *expect_type();
+
+VarList *read_func_param();
+VarList *read_func_params();
 
 Function *program();
 Function *function();
@@ -164,7 +174,6 @@ Node *mul();
 Node *unary();
 Node *postfix();
 Node *primary();
-char *node_name(int kind);
 
 // lvar.c
 
