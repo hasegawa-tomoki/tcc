@@ -4,9 +4,9 @@ assert() {
   input="$2"
 
   ./tcc "$input" > tmp.s
-  gcc -static -o tmp test/func_noargs.o test/func_withargs.o test/func_alloc4.o tmp.s
-  chmod 755 tmp
-  ./tmp
+  gcc -static -o /tmp/tcctest test/func_noargs.o test/func_withargs.o test/func_alloc4.o tmp.s
+  chmod 755 /tmp/tcctest
+  /tmp/tcctest
   actual="$?"
 
   if [ "$actual" = "$expected" ]; then
