@@ -12,7 +12,7 @@ extern char *typenames[];
 
 typedef enum {
   TK_RESERVED,
-  TK_RETURN,
+  TK_STR,
   TK_IDENT, 
   TK_NUM,
   TK_SIZEOF, 
@@ -35,7 +35,6 @@ typedef enum {
   TY_ARRAY, 
 } TypeKind;
 
-
 typedef struct Type Type;
 struct Type {
   TypeKind kind;
@@ -50,6 +49,9 @@ struct Var {
   Type* type;
   int offset;
   bool is_global;
+
+  char *contents;
+  int contents_len;
 };
 
 typedef struct VarList VarList;
@@ -200,7 +202,8 @@ void asmc(char *fmt, ...);
 void gen_lval(Node *node);
 void gen_addr(Node *node);
 void gen_stack_addr2value();
-int local_label_no();
+int new_label_no();
+char *new_text_literal_label();
 void gen(Node *node);
 void codegen(Function *prog);
 

@@ -349,7 +349,26 @@ Node *primary(){
     if (gvar){
       return gvar;
     }
+
     return new_local_var_node(tok);
+  }
+
+  if (token->kind == TK_STR){
+    Type *type = new_type(TY_ARRAY);
+    type->ptr_to = new_type(TY_CHAR);
+    type->array_len = token->len;
+
+    Var *var = calloc(1, sizeof(Var));
+    var->name = new_text_literal_label();
+    var->contents = token->str;
+    var->contents_len = token->len;
+
+    Node *node = new_node(ND_VAR);
+    node->type = type;
+    node->var = var;
+
+    token = token->next;
+    return node;
   }
 
   return new_num_node(expect_number());

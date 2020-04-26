@@ -71,7 +71,7 @@ bool expect(char *op){
 
 int expect_number(){
   if (token->kind != TK_NUM){
-    error_at(token->str, "expected a number (ERR1)");
+    error_at(token->str, "expected a number (ERR1: expect_number())");
   }
   int val = token->val;
   token = token->next;
@@ -180,17 +180,34 @@ Token *tokenize(){
 
     // Character literal
     if (*p == '\''){
-      *p++;
+      cur = new_token(TK_NUM, cur, p, 0);
+      p++;
       char c;
       c = *p;
-      cur = new_token(TK_NUM, cur, p, 0);
-      *p++;
+      p++;
       if (*p != '\''){
         error_at(p, "char literal too long");
       }
       cur->val = c;
-      cur->len = 1;
-      *p++;
+      cur->len = 3;
+      p++;
+      continue;
+    }
+
+    // String literal
+    if (*p == '"'){
+      cur = new_token(TK_STR, cur, p, 0);
+      char *q = p;
+      do {
+        p++;
+        if (! *p){
+          error_at(q, "unclosed string literal");
+        }
+      } while (*p != '"');
+      p++;
+
+      cur->str = substr(q + 1, p - q - 2);
+      cur->len = p - q - 2 + 1;
       continue;
     }
 

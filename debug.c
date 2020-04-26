@@ -3,7 +3,7 @@
 char *token_name(int kind){
   static char *token_kinds[] = {
       "TK_RESERVED",
-      "TK_RETURN",
+      "TK_STR",
       "TK_IDENT", 
       "TK_NUM",
       "TK_SIZEOF", 

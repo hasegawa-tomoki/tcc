@@ -88,9 +88,18 @@ void store(Type *type){
   indent--;
 }
 
-int local_label_no(){
+int new_label_no(){
   static int no = 0;
   return no++;
+}
+
+char *new_text_literal_label(){
+  static int no = 0;
+
+  char label[20];
+  sprintf(label, ".L.text.%d", no++);
+
+  return substr(label, 20);
 }
 
 void gen(Node *node){
@@ -133,7 +142,7 @@ void gen(Node *node){
       asmc("# --- gen } %s\n", node_name(node->kind));
       return;
     case ND_IF: {
-      int label_no = local_label_no();
+      int label_no = new_label_no();
       indent++;
       asmc("# --- gen %s: cond {\n", node_name(node->kind));
       indent++;
@@ -172,7 +181,7 @@ void gen(Node *node){
       return;
     }
     case ND_WHILE: {
-      int label_no = local_label_no();
+      int label_no = new_label_no();
       indent++;
       printf(".Lbegin_%d:\n", label_no);
       asmc("# --- gen %s: cond {\n", node_name(node->kind));
@@ -197,7 +206,7 @@ void gen(Node *node){
       return;
     }
     case ND_FOR: {
-      int label_no = local_label_no();
+      int label_no = new_label_no();
       indent++;
       asmc("# --- gen %s: init {\n", node_name(node->kind));
       indent++;
@@ -261,7 +270,7 @@ void gen(Node *node){
       asmc("# --- gen %s: args pop }\n", node_name(node->kind));
       asmc("# --- gen %s: call {\n", node_name(node->kind));
       indent++;
-      int label_no = local_label_no();
+      int label_no = new_label_no();
       printf("  mov rax, rsp\n");
       printf("  and rax, 15\n");
       printf("  jnz .Lcall_%d\n", label_no);
