@@ -1,6 +1,7 @@
 #include "tcc.h"
 
 Token *token;
+
 char *user_input;
 VarList *locals;
 VarList *globals;
@@ -8,8 +9,9 @@ VarList *globals;
 char *keywords[] = {
   "return", "if", "else", "while", "for", "sizeof", 
 };
+// Must be in order with TypeKind
 char *typenames[] = {
-  "int",
+  "char", "int",
 };
 
 Type *consume_pointer(Type *type){
@@ -22,12 +24,9 @@ Type *consume_pointer(Type *type){
 Type *expect_type(){
   for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
     if (consume(typenames[i])){
-      Type *ty;
-      if (!strcmp(typenames[i], "int")){
-        ty = new_type(TY_INT);
-        ty = consume_pointer(ty);
-        return ty;
-      }
+      Type *ty = new_type(i);
+      ty = consume_pointer(ty);
+      return ty;
     }
   }
   error_at(token->str, "expected any type");
@@ -176,6 +175,22 @@ Token *tokenize(){
         p++;
       }
       cur = new_token(TK_IDENT, cur, q, p - q);
+      continue;
+    }
+
+    // Character literal
+    if (*p == '\''){
+      *p++;
+      char c;
+      c = *p;
+      cur = new_token(TK_NUM, cur, p, 0);
+      *p++;
+      if (*p != '\''){
+        error_at(p, "char literal too long");
+      }
+      cur->val = c;
+      cur->len = 1;
+      *p++;
       continue;
     }
 

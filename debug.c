@@ -42,6 +42,7 @@ char *node_name(int kind){
 
 char *type_name(int kind){
   static char *type_kinds[] = {
+    "TY_CHAR", 
     "TY_INT", 
     "TY_PTR", 
     "TY_ARRAY", 

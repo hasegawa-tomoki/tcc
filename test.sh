@@ -88,5 +88,7 @@ assert 7 "int main() { int x[3][3]; x[0][0]=3; x[1][1]=4; return x[0][0] + x[1][
 assert 1 'int main() { int x[2][3]; int *y; y=x; *(y+1)=1; return *(*x+1); }'
 assert 3 'int x; int main() { x=3; return x; }'
 assert 128 'int ga; int main(){ ga = 100; test(); return ga; } int test(){ ga = ga + 28; }'
+assert 97 "int main(){ char a; a = 97; return a; }"
+assert 97 "int main(){ char a; a = 'a'; return a; }"
 
 echo OK

@@ -19,6 +19,9 @@ Type *new_type(TypeKind kind){
   type->kind = kind;
 
   switch (kind){
+    case TY_CHAR:
+      type->size = 1;
+      break;
     case TY_INT:
       type->size = 8;
       break;

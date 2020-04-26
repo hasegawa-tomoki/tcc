@@ -55,13 +55,36 @@ void gen_addr(Node *node){
   indent--;
 }
 
-void gen_stack_addr2value(){
+// value < [address]
+void load(Type *type){
   indent++;
-  asmc("# --- gen_stack_addr2value {\n");
+  asmc("# --- load {\n");
   printf("  pop rax\n");
-  printf("  mov rax, [rax]\n");
+  if (type->size == 1){
+    printf("  movsx rax, byte ptr [rax]\n");
+  } else {
+    // size = 8 (64bit)
+    printf("  mov rax, [rax]\n");
+  }
   printf("  push rax\n");
-  asmc("# --- gen_stack_addr2value }\n");
+  asmc("# --- load }\n");
+  indent--;
+}
+
+// value > [addres]
+void store(Type *type){
+  indent++;
+  asmc("# --- store {\n");
+  printf("  pop rdi\n");
+  printf("  pop rax\n");
+  if (type->size == 1){
+    printf("  mov [rax], dil\n");
+  } else {
+    // size = 8 (64bit)
+    printf("  mov [rax], rdi\n");
+  }
+  printf("  push rdi\n");
+  asmc("# --- store }\n");
   indent--;
 }
 
@@ -83,7 +106,7 @@ void gen(Node *node){
     case ND_VAR:
       gen_addr(node);
       if (node->type->kind != TY_ARRAY){
-        gen_stack_addr2value();
+        load(node->type);
       }
       asmc("# --- gen } %s\n", node_name(node->kind));
       return;
@@ -96,10 +119,7 @@ void gen(Node *node){
       gen(node->rhs);
       indent--;
       asmc("# --- gen %s: assign\n", node_name(node->kind));
-      printf("  pop rdi\n");
-      printf("  pop rax\n");
-      printf("  mov [rax], rdi\n");
-      printf("  push rdi\n");
+      store(node->lhs->type);
       indent--;
       asmc("# --- gen } %s\n", node_name(node->kind));
       return;
@@ -272,7 +292,7 @@ void gen(Node *node){
       gen(node->lhs);
       indent--;
       if (node->type->kind != TY_ARRAY){
-        gen_stack_addr2value();
+        load(node->type);
       }
       asmc("# --- gen end %s\n", node_name(node->kind));
       return;
