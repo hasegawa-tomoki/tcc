@@ -39,11 +39,11 @@ void gen_addr(Node *node){
   switch (node->kind){
     case ND_VAR:
       if (node->var->is_global){
-        printf("  push offset %s\n", node->var->name);
+        printf("  lea rax, [%s]\n", node->var->name);
       } else {
         printf("  lea rax, [rbp - %d]\n", node->var->offset);
-        printf("  push rax\n");
       }
+      printf("  push rax\n");
       break;
     case ND_DEREF:
       gen(node->lhs);
