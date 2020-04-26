@@ -45,6 +45,7 @@ struct Var {
   char *name;
   Type* type;
   int offset;
+  bool is_global;
 };
 
 typedef struct VarList VarList;
@@ -56,6 +57,7 @@ struct VarList {
 extern Token *token;
 extern char *user_input;
 extern VarList *locals;
+extern VarList *globals;
 
 bool consume(char *op);
 Token *consume_ident();
@@ -135,6 +137,8 @@ Node *new_add_node(Node *lhs, Node *rhs);
 Node *new_sub_node(Node *lhs, Node *rhs);
 Node *new_num_node(int val);
 Node *new_var_node(Var *var);
+Node *new_local_var_node(Token *tok);
+Node *new_global_var_node(Token *tok);
 
 // parse.c
 
@@ -149,11 +153,12 @@ struct Function {
   int stack_size;
 };
 
+void add_var2vl(VarList *var_list, Var *var);
 void add_var2locals(Var *var);
 void add_var2globals(Var *var);
 
-Var *new_var(char *name, Type *type);
-Var *new_array(char *name, Type *type);
+// Var *new_var(char *name, Type *type);
+// Var *new_array(char *name, Type *type);
 
 Type *new_type(TypeKind kind);
 Type *pointer_to(Type *type);
@@ -175,9 +180,14 @@ Node *unary();
 Node *postfix();
 Node *primary();
 
-// lvar.c
+// var.c
 
+Var *find_var(VarList *var_list, Token *tok);
 Var *find_lvar(Token *tok);
+Var *find_gvar(Token *tok);
+Var *new_var();
+void declare_gvar();
+void declare_lvar();
 
 // codegen.c
 

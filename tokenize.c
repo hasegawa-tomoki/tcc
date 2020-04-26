@@ -3,6 +3,7 @@
 Token *token;
 char *user_input;
 VarList *locals;
+VarList *globals;
 
 bool consume(char *op){
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){

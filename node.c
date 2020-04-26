@@ -120,3 +120,19 @@ Node *new_var_node(Var *var){
   node->type = var->type;
   return node;
 }
+
+Node *new_local_var_node(Token *tok){
+  Var *lvar = find_lvar(tok);
+  if (! lvar){
+    error_at(token->str, "Undefined local variable.");
+  }
+  return new_var_node(lvar);
+}
+
+Node *new_global_var_node(Token *tok){
+  Var *gvar = find_gvar(tok);
+  if (! gvar){
+    return NULL;
+  }
+  return new_var_node(gvar);
+}

@@ -54,7 +54,11 @@ char *node2str(Node *node){
 
   sprintf(str, "%s (", node_name(node->kind));
   if (node->kind == ND_VAR){
-    sprintf(str, "%s name: %s,", str, node->var->name);
+    if (node->var->is_global){
+      sprintf(str, "%s name: %s (global),", str, node->var->name);
+    } else {
+      sprintf(str, "%s name: %s,", str, node->var->name);
+    }
     sprintf(str, "%s offset: %d,", str, node->var->offset);
   }
   if (node->kind == ND_NUM){

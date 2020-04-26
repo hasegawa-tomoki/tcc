@@ -38,8 +38,12 @@ void gen_addr(Node *node){
   asmc("# --- gen_addr ( %s ){\n", node2str(node));
   switch (node->kind){
     case ND_VAR:
-      printf("  lea rax, [rbp - %d]\n", node->var->offset);
-      printf("  push rax\n");
+      if (node->var->is_global){
+        printf("  push offset %s\n", node->var->name);
+      } else {
+        printf("  lea rax, [rbp - %d]\n", node->var->offset);
+        printf("  push rax\n");
+      }
       break;
     case ND_DEREF:
       gen(node->lhs);
@@ -327,11 +331,21 @@ void codegen(Function *prog){
   printf(".intel_syntax noprefix\n");
   indent = 0;
 
+  printf("# --- global variables\n");
+  printf(".data\n");
+  for (VarList *vl = globals; vl; vl = vl->next){
+    printf("%s:\n", vl->var->name);
+    printf("  .zero %d\n", vl->var->type->size);
+  }
+  printf("\n");
+  
+  printf(".text\n");
   for (Function *fn = prog; fn; fn = fn->next){
     funcname = fn->name;
 
     printf(".global %s\n", fn->name);
     printf("# %s\n\n", user_input);
+
     printf("%s:\n", fn->name);
 
     // prologue
@@ -355,7 +369,7 @@ void codegen(Function *prog){
     printf(".Lreturn.%s:\n", fn->name);
     asmc("# --- epilogue\n");
     printf("  mov rsp, rbp\n");
-    printf("  pop rbp;\n");
+    printf("  pop rbp\n");
     printf("  ret\n");
     asmc("# --- \n\n");
   }

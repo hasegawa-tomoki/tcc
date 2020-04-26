@@ -7,22 +7,11 @@ void add_var2locals(Var *var){
   locals = vl;
 }
 
-Var *new_var(char *name, Type *type){
-  Var *var = calloc(1, sizeof(Var));
-  var->name = name;
-  var->type = type;
-
-  add_var2locals(var);
-  return var;
-}
-
-Var *new_array(char *name, Type *type){
-  Var *var = calloc(1, sizeof(Var));
-  var->name = name;
-  var->type = type;
-  
-  add_var2locals(var);
-  return var;
+void add_var2globals(Var *var){
+  VarList *vl = calloc(1, sizeof(VarList));
+  vl->var = var;
+  vl->next = globals;
+  globals = vl;
 }
 
 Type *new_type(TypeKind kind){
@@ -62,8 +51,8 @@ Type *expect_type(){
 
 VarList *read_func_param(){
     VarList *vl = calloc(1, sizeof(VarList));
-    Type *type = expect_type();
-    vl->var = new_var(expect_ident(), type);
+    vl->var = new_var();
+    add_var2locals(vl->var);
     return vl;
 }
 
@@ -83,15 +72,30 @@ VarList *read_func_params(){
   return head;
 }
 
+bool is_function(){
+  Token *saved = token;
+  Type *type = expect_type();
+  char *ident = expect_ident();
+  bool is_func = consume("(");
+  token = saved;
+  return is_func;
+}
+
 // program    = function*
 Function *program(){
   Function head = {};
   Function *cur = &head;
 
   while (! at_eof()){
-    cur->next = function();
-    cur = cur->next;
+    if (is_function()){
+      cur->next = function();
+      cur = cur->next;
+    } else {
+      // global variable declaration
+      declare_gvar();
+    }
   }
+
   return head.next;
 }
 
@@ -188,25 +192,7 @@ Node *stmt(){
   }
 
   if (peek("int")){
-    Type *type = expect_type();
-    Token* token = consume_ident();
-    char *var_name = substr(token->str, token->len);
-    if (peek("[")){
-      // array
-      while(consume("[")){
-        int length = expect_number();
-        Type *arr = new_type(TY_ARRAY);
-        arr->array_len = length;
-        arr->size = length * type->size;
-        arr->ptr_to = type;
-        type = arr;
-        expect("]");
-      }
-      new_array(var_name, type);
-    } else {
-      new_var(var_name, type);
-    }
-    expect(";");
+    declare_lvar();
     return new_node(ND_NULL);
   }
 
@@ -364,11 +350,11 @@ Node *primary(){
     }
 
     // Variable
-    Var *lvar = find_lvar(tok);
-    if (! lvar){
-      error_at(token->str, "Undefined varible.");
+    Node *gvar = new_global_var_node(tok);
+    if (gvar){
+      return gvar;
     }
-    return new_var_node(lvar);
+    return new_local_var_node(tok);
   }
 
   return new_num_node(expect_number());
