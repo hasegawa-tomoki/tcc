@@ -40,14 +40,6 @@ Type *pointer_to(Type *type){
   return ty;
 }
 
-Type *expect_type(){
-  expect("int");
-  Type *ty = new_type(TY_INT);
-  while (consume("*")){
-    ty = pointer_to(ty);
-  }
-  return ty;
-}
 
 VarList *read_func_param(){
     VarList *vl = calloc(1, sizeof(VarList));
@@ -191,7 +183,7 @@ Node *stmt(){
     return node;
   }
 
-  if (peek("int")){
+  if (peek_type()){
     declare_lvar();
     return new_node(ND_NULL);
   }

@@ -7,6 +7,9 @@
 
 // tokenize.c
 
+extern char *keywords[];
+extern char *typenames[];
+
 typedef enum {
   TK_RESERVED,
   TK_RETURN,

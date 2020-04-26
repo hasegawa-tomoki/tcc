@@ -5,6 +5,47 @@ char *user_input;
 VarList *locals;
 VarList *globals;
 
+char *keywords[] = {
+  "return", "if", "else", "while", "for", "sizeof", 
+};
+char *typenames[] = {
+  "int",
+};
+
+Type *consume_pointer(Type *type){
+  while (consume("*")){
+    type = pointer_to(type);
+  }
+  return type;
+}
+
+Type *expect_type(){
+  for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
+    if (consume(typenames[i])){
+      Type *ty;
+      if (!strcmp(typenames[i], "int")){
+        ty = new_type(TY_INT);
+        ty = consume_pointer(ty);
+        return ty;
+      }
+    }
+  }
+  error_at(token->str, "expected any type");
+}
+
+bool peek_type(){
+  Token *saved = token;
+  for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
+    if (consume(typenames[i])){
+      token = saved;
+      return true;
+    }
+    token = saved;
+  }
+  return false;
+}
+
+
 bool consume(char *op){
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
     return false;
@@ -81,16 +122,20 @@ bool is_alnum(char c) {
 }
 
 char *starts_with_reserved(char *p){
-  static char *kw[] = {
-    "return", "if", "else", "while", "for", "int", "sizeof", 
-  };
-  for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++){
-    int len = strlen(kw[i]);
-    if (startswith(p, kw[i]) && !is_alnum(p[len])){
-      return kw[i];
+  for (int i = 0; i < sizeof(keywords) / sizeof(*keywords); i++){
+    int len = strlen(keywords[i]);
+    if (startswith(p, keywords[i]) && !is_alnum(p[len])){
+      return keywords[i];
     }
   }
-
+  
+  for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
+    int len = strlen(typenames[i]);
+    if (startswith(p, typenames[i]) && !is_alnum(p[len])){
+      return typenames[i];
+    }
+  }
+  
   static char *ops[] = {
     "==", "!=", "<=", ">=", 
   };
