@@ -62,6 +62,9 @@ extern char *user_input;
 extern VarList *locals;
 extern VarList *globals;
 
+Type *consume_pointer(Type *type);
+Type *expect_type();
+bool peek_type();
 bool consume(char *op);
 Token *consume_ident();
 bool expect(char *op);
@@ -73,6 +76,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startswith(char *p, char *q);
 bool is_alpha(char c);
 bool is_alnum(char c);
+char *starts_with_reserved(char *p);
 Token *tokenize();
 
 // node.c
@@ -156,19 +160,16 @@ struct Function {
   int stack_size;
 };
 
-void add_var2vl(VarList *var_list, Var *var);
 void add_var2locals(Var *var);
 void add_var2globals(Var *var);
 
-// Var *new_var(char *name, Type *type);
-// Var *new_array(char *name, Type *type);
-
 Type *new_type(TypeKind kind);
 Type *pointer_to(Type *type);
-Type *expect_type();
 
 VarList *read_func_param();
 VarList *read_func_params();
+
+bool is_function();
 
 Function *program();
 Function *function();
