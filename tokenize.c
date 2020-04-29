@@ -154,8 +154,28 @@ Token *tokenize(){
   Token *cur = &head;
 
   while (*p){
+    // Skip whie space
     if (isspace(*p)){
       p++;
+      continue;
+    }
+
+    // Skip line comment
+    if (strncmp(p, "//", 2) == 0){
+      p += 2;
+      while (*p != '\n'){
+        p++;
+      }
+      continue;
+    }
+
+    // Skip bock comment
+    if (strncmp(p, "/*", 2) == 0){
+      char *q = strstr(p + 2, "*/");
+      if (! q){
+        error_at(p, "Unclosed block comment");
+      }
+      p = q + 2;
       continue;
     }
     
