@@ -167,6 +167,7 @@ void add_var2locals(Var *var);
 void add_var2globals(Var *var);
 
 Type *new_type(TypeKind kind);
+Type *new_array_type(Type *ptr_to, int length);
 Type *pointer_to(Type *type);
 
 VarList *read_func_param();

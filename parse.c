@@ -37,6 +37,14 @@ Type *new_type(TypeKind kind){
   return type;
 }
 
+Type *new_array_type(Type *ptr_to, int length){
+  Type *arr = new_type(TY_ARRAY);
+  arr->array_len = length;
+  arr->size = length * ptr_to->size;
+  arr->ptr_to = ptr_to;
+  return arr;
+}
+
 Type *pointer_to(Type *type){
   Type *ty = new_type(TY_PTR);
   ty->ptr_to = type;
@@ -354,20 +362,21 @@ Node *primary(){
   }
 
   if (token->kind == TK_STR){
-    Type *type = new_type(TY_ARRAY);
-    type->ptr_to = new_type(TY_CHAR);
-    type->array_len = token->len;
-
     Var *var = calloc(1, sizeof(Var));
     var->name = new_text_literal_label();
+    var->type = new_array_type(new_type(TY_CHAR), token->len);
+    var->is_global = true;
     var->contents = token->str;
     var->contents_len = token->len;
 
+    add_var2globals(var);
+
     Node *node = new_node(ND_VAR);
-    node->type = type;
     node->var = var;
+    node->type = var->type;
 
     token = token->next;
+    
     return node;
   }
 

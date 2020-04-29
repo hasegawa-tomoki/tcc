@@ -16,6 +16,8 @@ Var *find_gvar(Token *tok){
   return find_var(globals, tok);
 }
 
+
+
 Var *new_var(){
   Type *type = expect_type();
   Token* token = consume_ident();
@@ -24,11 +26,7 @@ Var *new_var(){
     // array
     while(consume("[")){
       int length = expect_number();
-      Type *arr = new_type(TY_ARRAY);
-      arr->array_len = length;
-      arr->size = length * type->size;
-      arr->ptr_to = type;
-      type = arr;
+      type = new_array_type(type, length);
       expect("]");
     }
   }

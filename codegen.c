@@ -364,7 +364,11 @@ void codegen(Function *prog){
   printf(".data\n");
   for (VarList *vl = globals; vl; vl = vl->next){
     printf("%s:\n", vl->var->name);
-    printf("  .zero %d\n", vl->var->type->size);
+    if (vl->var->contents){
+      printf("  .string \"%s\"", vl->var->contents);
+    } else {
+      printf("  .zero %d\n", vl->var->type->size);
+    }
   }
   printf("\n");
   
