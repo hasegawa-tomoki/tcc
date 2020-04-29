@@ -67,6 +67,7 @@ extern Token *token;
 extern char *user_input;
 extern VarList *locals;
 extern VarList *globals;
+extern VarList *scope;
 
 Type *consume_pointer(Type *type);
 Type *expect_type();
@@ -194,8 +195,9 @@ Node *primary();
 // var.c
 
 Var *find_var(VarList *var_list, Token *tok);
-Var *find_lvar(Token *tok);
-Var *find_gvar(Token *tok);
+Var *find_scope_var(Token *tok);
+Var *find_local_var(Token *tok);
+Var *find_global_var(Token *tok);
 Var *new_var();
 void declare_gvar();
 void declare_lvar();

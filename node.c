@@ -122,15 +122,15 @@ Node *new_var_node(Var *var){
 }
 
 Node *new_local_var_node(Token *tok){
-  Var *lvar = find_lvar(tok);
-  if (! lvar){
-    error_at(token->str, "Undefined local variable.");
+  Var *var = find_scope_var(tok);
+  if (! var){
+    error_at(token->str, "Undefined scope variable.");
   }
-  return new_var_node(lvar);
+  return new_var_node(var);
 }
 
 Node *new_global_var_node(Token *tok){
-  Var *gvar = find_gvar(tok);
+  Var *gvar = find_global_var(tok);
   if (! gvar){
     return NULL;
   }

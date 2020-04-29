@@ -106,6 +106,8 @@ Function *program(){
 Function *function(){
   locals = NULL;
 
+  VarList *sc = scope;
+
   Type *fn_type = expect_type();
   char *name = expect_ident();
   // args
@@ -127,6 +129,8 @@ Function *function(){
   fn->params = params;
   fn->node = head.next;
   fn->locals = locals;
+
+  scope = sc;
   return fn;
 }
 
@@ -183,6 +187,8 @@ Node *stmt(){
   }
 
   if (consume("{")){
+    VarList *sc = scope;
+
     Node head = {};
     Node *cur = &head;
     while (!consume("}")){
@@ -191,6 +197,8 @@ Node *stmt(){
     }
     node = new_node(ND_BLOCK);
     node->body = head.next;
+
+    scope = sc;
     return node;
   }
 

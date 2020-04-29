@@ -8,15 +8,17 @@ Var *find_var(VarList *var_list, Token *tok){
   }
 }
 
-Var *find_lvar(Token *tok){
+Var *find_scope_var(Token *tok){
+  return find_var(scope, tok);
+}
+
+Var *find_local_var(Token *tok){
   return find_var(locals, tok);
 }
 
-Var *find_gvar(Token *tok){
+Var *find_global_var(Token *tok){
   return find_var(globals, tok);
 }
-
-
 
 Var *new_var(){
   Type *type = expect_type();
@@ -33,6 +35,13 @@ Var *new_var(){
   Var *var = calloc(1, sizeof(Var));
   var->name = var_name;
   var->type = type;
+
+  // Add to scope
+  VarList *svl = calloc(1, sizeof(VarList));
+  svl->var = var;
+  svl->next = scope;
+  scope = svl;
+
   return var;
 }
 

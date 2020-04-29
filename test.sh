@@ -95,5 +95,6 @@ assert 65 'int main(){ char *a; a = "Answer to the Ultimate Question of Life, th
 assert 110 'int main(){ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[1]; }'
 assert 110 'int main(){ /* block comment */ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[1]; }'
 assert 6 'int main(){ return sizeof("abcde"); }'
+assert 10 'int main(){ int a; a = 10; { int a; a = 20; } return a; }'
 
 echo OK
