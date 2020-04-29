@@ -90,6 +90,7 @@ assert 3 'int x; int main() { x=3; return x; }'
 assert 128 'int ga; int main(){ ga = 100; test(); return ga; } int test(){ ga = ga + 28; }'
 assert 97 "int main(){ char a; a = 97; return a; }"
 assert 97 "int main(){ char a; a = 'a'; return a; }"
+assert 65 'int main(){ char *a; a = "ABC"; return a[0]; }'
 assert 65 'int main(){ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[0]; }'
 assert 110 'int main(){ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[1]; }'
 assert 110 'int main(){ /* block comment */ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[1]; }'
