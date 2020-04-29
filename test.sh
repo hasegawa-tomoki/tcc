@@ -3,7 +3,7 @@ assert() {
   expected="$1"
   input="$2"
 
-  ./tcc "$input" > tmp.s
+  ./tcc <(echo "$input") > tmp.s
   gcc -static -o /tmp/tcctest test/func_noargs.o test/func_withargs.o test/func_alloc4.o tmp.s
   chmod 755 /tmp/tcctest
   /tmp/tcctest

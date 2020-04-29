@@ -1,12 +1,15 @@
 #include "tcc.h"
 
+char *filename;
+
 int main(int argc, char **argv){
   if (argc != 2){
     error("引数の個数が正しくありません");
     return 1;
   }
 
-  user_input = argv[1];
+  filename = argv[1];
+  user_input = read_file(argv[1]);
   token = tokenize();
   //show_tokens(token);
   Function *prog = program();

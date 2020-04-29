@@ -1,9 +1,12 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+extern char *filename;
 
 // tokenize.c
 
@@ -228,3 +231,4 @@ void error_at(char *loc, char *fmt, ...);
 void error_tok(Token *tok, char *fmt, ...);
 char *substr(char *src, int len);
 void debug(char *fmt, ...);
+char *read_file(char *path);
