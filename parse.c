@@ -40,8 +40,8 @@ Type *new_type(TypeKind kind){
 Type *new_array_type(Type *ptr_to, int length){
   Type *arr = new_type(TY_ARRAY);
   arr->array_len = length;
-  arr->size = length * ptr_to->size;
   arr->ptr_to = ptr_to;
+  arr->size = length * ptr_to->size;
   return arr;
 }
 
@@ -366,6 +366,7 @@ Node *primary(){
     var->name = new_text_literal_label();
     var->type = new_array_type(new_type(TY_CHAR), token->len);
     var->is_global = true;
+
     var->contents = token->str;
     var->contents_len = token->len;
 
