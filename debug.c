@@ -27,6 +27,7 @@ char *node_name(int kind){
       "ND_ASSIGN", 
       "ND_VAR", 
       "ND_NUM", 
+      "ND_MEMBER", 
       "ND_RETURN", 
       "ND_IF", 
       "ND_WHILE", 
@@ -46,6 +47,7 @@ char *type_name(int kind){
     "TY_INT", 
     "TY_PTR", 
     "TY_ARRAY", 
+    "TY_STRUCT", 
   };
   return type_kinds[kind];
 }
@@ -148,16 +150,27 @@ void show_tokens(Token *token){
   fprintf(stderr, "** tokens end\n");
 }
 
-void show_variable(VarList *var_list){
-  Type *type = var_list->var->type;
-  fprintf(stderr, "  -- variable  name: %s  offset: %d  ", var_list->var->name, var_list->var->offset);
-  fprintf(stderr, "size: %d  ", type->size);
+void show_type(Type *type){
   fprintf(stderr, "type: %s", type_name(type->kind));
   while (type->kind == TY_PTR || type->kind == TY_ARRAY){
     type = type->ptr_to;
     fprintf(stderr, " -> %s", type_name(type->kind));
   }
+}
+
+void show_variable(VarList *var_list){
+  Type *type = var_list->var->type;
+  fprintf(stderr, "  -- variable  name: %s  offset: %d  ", var_list->var->name, var_list->var->offset);
+  fprintf(stderr, "size: %d  ", type->size);
+  show_type(type);
   fprintf(stderr, "\n");
+  if (type->kind == TY_STRUCT){
+    for (Member *mem = type->members; mem; mem = mem->next){
+      fprintf(stderr, "    -- member: name: %s  offset: %d  ", mem->name, mem->offset);
+      show_type(mem->type);
+      fprintf(stderr, "\n");
+    }
+  }
 }
 
 void show_variables(VarList *var_list){

@@ -14,44 +14,6 @@ void add_var2globals(Var *var){
   globals = vl;
 }
 
-Type *new_type(TypeKind kind){
-  Type *type = calloc(1, sizeof(Type));
-  type->kind = kind;
-
-  switch (kind){
-    case TY_CHAR:
-      type->size = 1;
-      break;
-    case TY_INT:
-      type->size = 8;
-      break;
-    case TY_PTR:
-      type->size = 8;
-      break;
-    case TY_ARRAY:
-      break;
-    default:
-      error("Undefined type %d in new_type", kind);
-  }
-
-  return type;
-}
-
-Type *new_array_type(Type *ptr_to, int length){
-  Type *arr = new_type(TY_ARRAY);
-  arr->array_len = length;
-  arr->ptr_to = ptr_to;
-  arr->size = length * ptr_to->size;
-  return arr;
-}
-
-Type *pointer_to(Type *type){
-  Type *ty = new_type(TY_PTR);
-  ty->ptr_to = type;
-  return ty;
-}
-
-
 VarList *read_func_param(){
     VarList *vl = calloc(1, sizeof(VarList));
     vl->var = new_var();

@@ -10,9 +10,6 @@ extern char *filename;
 
 // tokenize.c
 
-extern char *keywords[];
-extern char *typenames[];
-
 typedef enum {
   TK_RESERVED,
   TK_STR,
@@ -36,14 +33,24 @@ typedef enum {
   TY_INT, 
   TY_PTR, 
   TY_ARRAY, 
+  TY_STRUCT, 
 } TypeKind;
 
 typedef struct Type Type;
+typedef struct Member Member;
 struct Type {
   TypeKind kind;
   Type *ptr_to;
   int size;
   int array_len;
+  Member *members;
+};
+
+struct Member {
+  Member *next;
+  Type *type;
+  char *name;
+  int offset;
 };
 
 typedef struct Var Var;
@@ -64,14 +71,15 @@ struct VarList {
 };
 
 extern Token *token;
+
 extern char *user_input;
 extern VarList *locals;
 extern VarList *globals;
 extern VarList *scope;
 
+extern char *keywords[];
+
 Type *consume_pointer(Type *type);
-Type *expect_type();
-bool peek_type();
 bool consume(char *op);
 Token *consume_ident();
 bool expect(char *op);
@@ -102,6 +110,7 @@ typedef enum {
   ND_ASSIGN, // =
   ND_VAR, // local variable
   ND_NUM, // integer
+  ND_MEMBER ,
   ND_RETURN, // return
   ND_IF, 
   ND_WHILE, 
@@ -154,6 +163,19 @@ Node *new_var_node(Var *var);
 Node *new_local_var_node(Token *tok);
 Node *new_global_var_node(Token *tok);
 
+// type.c
+
+extern char *typenames[2];
+
+void set_size2type(Type *type);
+Type *new_type(TypeKind kind);
+Type *new_array_type(Type *ptr_to, int length);
+Type *pointer_to(Type *type);
+
+Member *struct_member();
+Type *expect_type();
+bool peek_type();
+
 // parse.c
 
 typedef struct Function Function;
@@ -169,10 +191,6 @@ struct Function {
 
 void add_var2locals(Var *var);
 void add_var2globals(Var *var);
-
-Type *new_type(TypeKind kind);
-Type *new_array_type(Type *ptr_to, int length);
-Type *pointer_to(Type *type);
 
 VarList *read_func_param();
 VarList *read_func_params();

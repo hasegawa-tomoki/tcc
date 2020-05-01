@@ -8,11 +8,7 @@ VarList *globals;
 VarList *scope;
 
 char *keywords[] = {
-  "return", "if", "else", "while", "for", "sizeof", 
-};
-// Must be in order with TypeKind
-char *typenames[] = {
-  "char", "int",
+  "return", "if", "else", "while", "for", "sizeof", "struct", 
 };
 
 Type *consume_pointer(Type *type){
@@ -21,30 +17,6 @@ Type *consume_pointer(Type *type){
   }
   return type;
 }
-
-Type *expect_type(){
-  for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
-    if (consume(typenames[i])){
-      Type *ty = new_type(i);
-      ty = consume_pointer(ty);
-      return ty;
-    }
-  }
-  error_at(token->str, "expected any type");
-}
-
-bool peek_type(){
-  Token *saved = token;
-  for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
-    if (consume(typenames[i])){
-      token = saved;
-      return true;
-    }
-    token = saved;
-  }
-  return false;
-}
-
 
 bool consume(char *op){
   if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len)){
