@@ -334,7 +334,7 @@ Node *primary(){
   if (token->kind == TK_STR){
     Var *var = calloc(1, sizeof(Var));
     var->name = new_text_literal_label();
-    var->type = new_array_type(new_type(TY_CHAR), token->len);
+    var->type = new_array_type(new_char_type(), token->len);
     var->is_global = true;
 
     var->contents = token->str;

@@ -18,7 +18,6 @@ assert() {
 }
 
 assert 0 'int main(){ struct { int a; char *b; char c; } first; return 0; }'
-exit;
 
 assert 0 "int main(){ return 0; }"
 assert 42 "int main(){ return 42; }"

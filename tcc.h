@@ -28,6 +28,7 @@ struct Token {
   int len;
 };
 
+// Edit here to add type
 typedef enum {
   TY_CHAR,
   TY_INT, 
@@ -43,6 +44,7 @@ struct Type {
   Type *ptr_to;
   int size;
   int array_len;
+  int align;
   Member *members;
 };
 
@@ -165,11 +167,17 @@ Node *new_global_var_node(Token *tok);
 
 // type.c
 
+// Edit here to add type
 extern char *typenames[2];
 
-void set_size2type(Type *type);
-Type *new_type(TypeKind kind);
+int get_size(Type *type);
+int align_to(int n, int align);
+
+Type *new_type(TypeKind kind, int size, int align);
 Type *new_array_type(Type *ptr_to, int length);
+Type *new_struct_type(Member *members);
+Type *new_int_type();
+Type *new_char_type();
 Type *pointer_to(Type *type);
 
 Member *struct_member();

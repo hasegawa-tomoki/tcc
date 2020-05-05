@@ -14,7 +14,7 @@ void set_lhs(Node *node, Node *lhs){
     case ND_LE:
     case ND_FUNCCALL:
     case ND_NUM:
-      node->type = new_type(TY_INT);
+      node->type = new_int_type();
       break;
     case ND_PTR_ADD:
     case ND_PTR_SUB:
@@ -27,7 +27,7 @@ void set_lhs(Node *node, Node *lhs){
     case ND_ADDR:
       // chibicc のコミットではこうなっているけど、アドレス計算は TY_INT では？
       //node->type = pointer_to(node->lhs->type);
-      node->type = new_type(TY_INT);
+      node->type = new_int_type();
       break;
     case ND_DEREF:
       if (! node->lhs->type->ptr_to){
@@ -109,7 +109,7 @@ Node *new_sub_node(Node *lhs, Node *rhs){
 Node *new_num_node(int val){
   Node *node = new_node(ND_NUM);
   node->val = val;
-  node->type = new_type(TY_INT);
+  node->type = new_int_type();
 
   return node;
 }

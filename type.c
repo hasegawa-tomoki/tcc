@@ -1,7 +1,8 @@
 #include "tcc.h"
 
-// Must be in order with TypeKind
-// Must edit tcc.h
+// Edit here to add type
+// - Must be in order with TypeKind declaration.
+// - Must be same size as declaration.
 char *typenames[] = {
   "char", "int",
 };
@@ -10,56 +11,86 @@ int get_size(Type *type){
   switch (type->kind){
     case TY_CHAR:
       return 1;
-      break;
     case TY_INT:
       return 8;
-      break;
     case TY_PTR:
       return 8;
-      break;
     case TY_ARRAY:
       return type->size * type->array_len;
-      break;
     case TY_STRUCT:
-      break;
+      return 0;
     default:
-      error("Undefined type %d in new_type", type->kind);
+      error("Undefined type %d in get_size()", type->kind);
   }
 }
 
-Type *new_type(TypeKind kind){
+int get_align(Type *type){
+  switch (type->kind){
+    case TY_CHAR:
+      return 1;
+    case TY_INT:
+      return 8;
+    case TY_PTR:
+      return 8;
+    case TY_ARRAY:
+      if (type->ptr_to){
+        return type->ptr_to->align;
+      }
+      return 0;
+    case TY_STRUCT:
+      return 0;
+    default:
+      error("Undefined type %d in get_aligh()", type->kind);
+  }
+}
+
+int align_to(int n, int align) {
+  return (n + align - 1) & ~(align - 1);
+}
+
+Type *new_type(TypeKind kind, int size, int align){
   Type *type = calloc(1, sizeof(Type));
   type->kind = kind;
-  type->size = get_size(type);
+  type->size = size;
+  type->align = align;
   return type;
 }
 
 Type *new_array_type(Type *ptr_to, int length){
-  Type *arr = new_type(TY_ARRAY);
+  Type *arr = new_type(TY_ARRAY, ptr_to->size * length, ptr_to->align);
   arr->array_len = length;
   arr->ptr_to = ptr_to;
-  arr->size = get_size(arr);
-
   return arr;
 }
 
 Type *new_struct_type(Member *members){
-  Type *st = new_type(TY_STRUCT);
-  st->members = members;
-
   // calc offset & size
   int offset = 0;
+  int align = 0;
   for (Member *mem = members; mem; mem = mem->next){
+    offset = align_to(offset, mem->type->align);
     mem->offset = offset;
     offset += mem->type->size;
+    if (align < mem->type->align){
+      align = mem->type->align;
+    }
   }
-  st->size = offset;
+  Type *st = new_type(TY_STRUCT, align_to(offset, st->align), align);
+  st->members = members;
 
   return st;
 }
 
+Type *new_int_type(){
+  return new_type(TY_INT, 8, 8);
+}
+
+Type *new_char_type(){
+  return new_type(TY_INT, 1, 1);
+}
+
 Type *pointer_to(Type *type){
-  Type *ty = new_type(TY_PTR);
+  Type *ty = new_type(TY_PTR, 8, 8);
   ty->ptr_to = type;
   return ty;
 }
@@ -80,7 +111,16 @@ Member *struct_member(){
 Type *expect_type(){
   for (int i = 0; i < sizeof(typenames) / sizeof(*typenames); i++){
     if (consume(typenames[i])){
-      Type *ty = new_type(i);
+      Type *ty;
+      // Edit here to add type
+      switch (i){
+        case TY_CHAR:
+          ty = new_char_type();
+          break;
+        case TY_INT:
+          ty = new_int_type();
+          break;
+      }
       ty = consume_pointer(ty);
       return ty;
     }

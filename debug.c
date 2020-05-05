@@ -63,6 +63,7 @@ char *node2str(Node *node){
       sprintf(str, "%s name: %s,", str, node->var->name);
     }
     sprintf(str, "%s offset: %d,", str, node->var->offset);
+    sprintf(str, "%s aligh: %d,", str, node->var->type->align);
   }
   if (node->kind == ND_NUM){
     sprintf(str, "%s val: %d,", str, node->val);
@@ -160,7 +161,7 @@ void show_type(Type *type){
 
 void show_variable(VarList *var_list){
   Type *type = var_list->var->type;
-  fprintf(stderr, "  -- variable  name: %s  offset: %d  ", var_list->var->name, var_list->var->offset);
+  fprintf(stderr, "  -- variable  name: %s  offset: %d  align: %d  ", var_list->var->name, var_list->var->offset, var_list->var->type->align);
   fprintf(stderr, "size: %d  ", type->size);
   show_type(type);
   fprintf(stderr, "\n");
