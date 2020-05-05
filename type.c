@@ -7,43 +7,6 @@ char *typenames[] = {
   "char", "int",
 };
 
-int get_size(Type *type){
-  switch (type->kind){
-    case TY_CHAR:
-      return 1;
-    case TY_INT:
-      return 8;
-    case TY_PTR:
-      return 8;
-    case TY_ARRAY:
-      return type->size * type->array_len;
-    case TY_STRUCT:
-      return 0;
-    default:
-      error("Undefined type %d in get_size()", type->kind);
-  }
-}
-
-int get_align(Type *type){
-  switch (type->kind){
-    case TY_CHAR:
-      return 1;
-    case TY_INT:
-      return 8;
-    case TY_PTR:
-      return 8;
-    case TY_ARRAY:
-      if (type->ptr_to){
-        return type->ptr_to->align;
-      }
-      return 0;
-    case TY_STRUCT:
-      return 0;
-    default:
-      error("Undefined type %d in get_aligh()", type->kind);
-  }
-}
-
 int align_to(int n, int align) {
   return (n + align - 1) & ~(align - 1);
 }
@@ -75,7 +38,7 @@ Type *new_struct_type(Member *members){
       align = mem->type->align;
     }
   }
-  Type *st = new_type(TY_STRUCT, align_to(offset, st->align), align);
+  Type *st = new_type(TY_STRUCT, align_to(offset, align), align);
   st->members = members;
 
   return st;
@@ -99,6 +62,7 @@ Member *struct_member(){
   Type *type = expect_type();
   type = consume_pointer(type);
   char *name = expect_ident();
+  type = read_type_suffix(type);
 
   Member *member = calloc(1, sizeof(Member));
   member->type = type;
@@ -106,6 +70,23 @@ Member *struct_member(){
 
   expect(";");
   return member;
+}
+
+TagScope *find_tag(Token *tok){
+  for (TagScope *sc = tag_scope; sc; sc = sc->next){
+    if (strlen(sc->name) == tok->len && !strncmp(tok->str, sc->name, tok->len)){
+      return sc;
+    }
+  }
+  return NULL;
+}
+
+void push_tag2scope(Token *tok, Type *type){
+  TagScope *sc = calloc(1, sizeof(TagScope));
+  sc->name = substr(tok->str, tok->len);
+  sc->type = type;
+  sc->next = tag_scope;
+  tag_scope = sc;
 }
 
 Type *expect_type(){
@@ -126,6 +107,16 @@ Type *expect_type(){
     }
   }
   if (consume("struct")){
+    Token *tag = consume_ident();
+    if (tag && (! peek("{"))){
+      // struct foo bar
+      TagScope *sc = find_tag(tag);
+      if (! sc){
+        error_token(token, "Undefined struct tag");
+      }
+      return sc->type;
+    }
+    // struct {} or struct foo {}
     expect("{");
     Member head = {};
     Member *cur = &head;
@@ -133,11 +124,13 @@ Type *expect_type(){
       cur->next = struct_member();
       cur = cur->next;
     }
-    // Type *ty = new_type(TY_STRUCT);
-    // ty->members = head.next;
     Member *members = head.next;
     Type *ty = new_struct_type(members);
 
+    if (tag){
+      push_tag2scope(tag, ty);
+    }
+    
     return ty;
   }
 

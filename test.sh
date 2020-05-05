@@ -17,6 +17,16 @@ assert() {
   fi
 }
 
+assert 2 "int main(){ char a[2]; return sizeof(a); }"
+assert 16 "int main(){ struct t {int a; int b;} x; struct t y; return sizeof(y); }"
+assert 16 "int main(){ struct t {int a; int b;}; struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {char a[2];}; struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return y.x; }"
+assert 3 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return t+y.x; }"
+
+
+assert 0 'int main(){ struct t { int a; char *b; char c; }; return 0; }'
 assert 0 'int main(){ struct { int a; char *b; char c; } first; return 0; }'
 
 assert 0 "int main(){ return 0; }"

@@ -1,5 +1,17 @@
 #include "tcc.h"
 
+Scope *enter_scope(){
+  Scope *sc = calloc(1, sizeof(Scope));
+  sc->var_scope = var_scope;
+  sc->tag_scope = tag_scope;
+  return sc;
+}
+
+void leave_scope(Scope *sc){
+  var_scope = sc->var_scope;
+  tag_scope = sc->tag_scope;
+}
+
 void add_var2locals(Var *var){
   VarList *vl = calloc(1, sizeof(VarList));
   vl->var = var;
@@ -68,7 +80,7 @@ Function *program(){
 Function *function(){
   locals = NULL;
 
-  VarList *sc = scope;
+  Scope *sc = enter_scope();
 
   Type *fn_type = expect_type();
   char *name = expect_ident();
@@ -92,7 +104,8 @@ Function *function(){
   fn->node = head.next;
   fn->locals = locals;
 
-  scope = sc;
+  leave_scope(sc);
+
   return fn;
 }
 
@@ -149,7 +162,7 @@ Node *stmt(){
   }
 
   if (consume("{")){
-    VarList *sc = scope;
+    Scope *sc = enter_scope();
 
     Node head = {};
     Node *cur = &head;
@@ -160,7 +173,7 @@ Node *stmt(){
     node = new_node(ND_BLOCK);
     node->body = head.next;
 
-    scope = sc;
+    leave_scope(sc);
     return node;
   }
 
@@ -283,13 +296,22 @@ Node *unary(){
 Node *postfix(){
   Node *node = primary();
 
-  // x[y] = *(x + y)
-  while(consume("[")){
-    Node *exp = new_add_node(node, expr());
-    expect("]");
-    node = new_deref_node(exp);
+  for (;;){
+    // x[y] = *(x + y)
+    if (consume("[")){
+      Node *exp = new_add_node(node, expr());
+      expect("]");
+      node = new_deref_node(exp);
+      continue;
+    }
+
+    if (consume(".")){
+      node = new_struct_ref_node(node);
+      continue;
+    }
+
+    return node;
   }
-  return node;
 }
 
 // primary    = num

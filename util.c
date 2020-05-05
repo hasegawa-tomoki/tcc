@@ -40,7 +40,7 @@ void error_at(char *loc, char *fmt, ...){
   exit(1);
 }
 
-void error_tok(Token *tok, char *fmt, ...){
+void error_token(Token *tok, char *fmt, ...){
   va_list ap;
   va_start(ap, fmt);
   error_at(tok->str, fmt, ap);

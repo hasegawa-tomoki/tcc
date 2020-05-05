@@ -72,12 +72,26 @@ struct VarList {
   Var *var;
 };
 
+typedef struct TagScope TagScope;
+struct TagScope {
+  TagScope *next;
+  char *name;
+  Type *type;
+};
+
 extern Token *token;
 
 extern char *user_input;
 extern VarList *locals;
 extern VarList *globals;
-extern VarList *scope;
+extern VarList *var_scope;
+extern TagScope *tag_scope;
+
+typedef struct Scope Scope;
+struct Scope {
+  VarList *var_scope;
+  TagScope *tag_scope;
+};
 
 extern char *keywords[];
 
@@ -138,6 +152,8 @@ struct Node {
   int val;
   // Used if kind == ND_VAR
   Var *var;
+  // Used if kind == ND_MEMBER
+  Member *member;
   //int offset;
   // "if" "(" cond ")" then "else" els
   Node *cond;
@@ -157,6 +173,8 @@ void set_lhs(Node *node, Node *lhs);
 void set_rhs(Node *node, Node *rhs);
 Node *new_node(NodeKind kind);
 Node *new_deref_node(Node *lhs);
+Member *find_member(Type *type, char *name);
+Node *new_struct_ref_node(Node *lhs);
 Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs);
 Node *new_add_node(Node *lhs, Node *rhs);
 Node *new_sub_node(Node *lhs, Node *rhs);
@@ -170,7 +188,6 @@ Node *new_global_var_node(Token *tok);
 // Edit here to add type
 extern char *typenames[2];
 
-int get_size(Type *type);
 int align_to(int n, int align);
 
 Type *new_type(TypeKind kind, int size, int align);
@@ -180,6 +197,7 @@ Type *new_int_type();
 Type *new_char_type();
 Type *pointer_to(Type *type);
 
+TagScope *find_tag(Token *tok);
 Member *struct_member();
 Type *expect_type();
 bool peek_type();
@@ -222,8 +240,9 @@ Node *primary();
 
 Var *find_var(VarList *var_list, Token *tok);
 Var *find_scope_var(Token *tok);
-Var *find_local_var(Token *tok);
 Var *find_global_var(Token *tok);
+void push_var2scope(Var *var);
+Type *read_type_suffix(Type *type);
 Var *new_var();
 void declare_gvar();
 void declare_lvar();
@@ -251,12 +270,14 @@ void show_token(Token *tok);
 void show_tokens(Token *tok);
 void show_variable(VarList *var_list);
 void show_variables(VarList *var_list);
+void show_member(Member *member);
+void show_members(Member *members);
 
 // util.c
 
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
-void error_tok(Token *tok, char *fmt, ...);
+void error_token(Token *tok, char *fmt, ...);
 char *substr(char *src, int len);
 void debug(char *fmt, ...);
 char *read_file(char *path);

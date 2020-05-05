@@ -5,7 +5,8 @@ Token *token;
 char *user_input;
 VarList *locals;
 VarList *globals;
-VarList *scope;
+VarList *var_scope;
+TagScope *tag_scope;
 
 char *keywords[] = {
   "return", "if", "else", "while", "for", "sizeof", "struct", 

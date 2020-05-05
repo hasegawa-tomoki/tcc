@@ -58,6 +58,34 @@ Node *new_deref_node(Node *lhs){
   return node;
 }
 
+Member *find_member(Type *type, char *name){
+  for (Member *mem = type->members; mem; mem = mem->next){
+    if (! strcmp(mem->name, name)){
+      return mem;
+    }
+  }
+  return NULL;
+}
+
+Node *new_struct_ref_node(Node *lhs){
+  if (lhs->type->kind != TY_STRUCT){
+    error_token(token, "Not a struct");
+  }
+
+  Member *mem = find_member(lhs->type, expect_ident());
+  if (! mem){
+    error_token(token, "Member not found");
+  }
+
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_MEMBER;
+  set_lhs(node, lhs);
+  node->member = mem;
+  node->type = mem->type;
+
+  return node;
+}
+
 Node *new_lr_node(NodeKind kind, Node *lhs, Node *rhs){
   Node *node = new_node(kind);
   set_lhs(node, lhs);
@@ -82,7 +110,7 @@ Node *new_add_node(Node *lhs, Node *rhs){
   } else if (lhs->type->kind == TY_INT && rhs->type->ptr_to){
     return new_lr_node(ND_PTR_ADD, rhs, lhs);
   }
-  error_tok(token, "invalid operands");
+  error_token(token, "invalid operands");
 }
 
 Node *new_sub_node(Node *lhs, Node *rhs){
@@ -103,7 +131,7 @@ Node *new_sub_node(Node *lhs, Node *rhs){
   }
   show_node(lhs, "lhs", 0);
   show_node(rhs, "rhs", 0);
-  error_tok(token, "Invalid operands");
+  error_token(token, "Invalid operands");
 }
 
 Node *new_num_node(int val){

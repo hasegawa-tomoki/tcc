@@ -6,24 +6,25 @@ Var *find_var(VarList *var_list, Token *tok){
       return vl->var;
     }
   }
+  return NULL;
 }
 
 Var *find_scope_var(Token *tok){
-  return find_var(scope, tok);
-}
-
-Var *find_local_var(Token *tok){
-  return find_var(locals, tok);
+  return find_var(var_scope, tok);
 }
 
 Var *find_global_var(Token *tok){
   return find_var(globals, tok);
 }
 
-Var *new_var(){
-  Type *type = expect_type();
-  Token* token = consume_ident();
-  char *var_name = substr(token->str, token->len);
+void push_var2scope(Var *var){
+  VarList *svl = calloc(1, sizeof(VarList));
+  svl->var = var;
+  svl->next = var_scope;
+  var_scope = svl;
+}
+
+Type *read_type_suffix(Type *type){
   if (peek("[")){
     // array
     while(consume("[")){
@@ -32,15 +33,23 @@ Var *new_var(){
       expect("]");
     }
   }
+  return type;
+}
+
+Var *new_var(){
+  Type *type = expect_type();
+  Token* token = consume_ident();
+  if (! token){
+    return NULL;
+  }
+  char *var_name = substr(token->str, token->len);
+  type = read_type_suffix(type);
+
   Var *var = calloc(1, sizeof(Var));
   var->name = var_name;
   var->type = type;
 
-  // Add to scope
-  VarList *svl = calloc(1, sizeof(VarList));
-  svl->var = var;
-  svl->next = scope;
-  scope = svl;
+  push_var2scope(var);
 
   return var;
 }
@@ -55,5 +64,7 @@ void declare_gvar(){
 void declare_lvar(){
   Var *var = new_var();
   expect(";");
-  add_var2locals(var);
+  if (var){
+    add_var2locals(var);
+  }
 }

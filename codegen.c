@@ -48,6 +48,12 @@ void gen_addr(Node *node){
     case ND_DEREF:
       gen(node->lhs);
       break;
+    case ND_MEMBER:
+      gen_addr(node->lhs);
+      printf("  pop rax\n");
+      printf("  add rax, %d\n", node->member->offset);
+      printf("  push rax\n");
+      break;
     default:
       error("not an lvalue");
   }
@@ -112,6 +118,7 @@ void gen(Node *node){
       printf("  push %d\n", node->val);
       asmc("# --- gen } %s\n", node_name(node->kind));
       return;
+    case ND_MEMBER:
     case ND_VAR:
       gen_addr(node);
       if (node->type->kind != TY_ARRAY){

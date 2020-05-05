@@ -181,3 +181,17 @@ void show_variables(VarList *var_list){
   }
  fprintf(stderr, "** variables end\n");
 }
+
+void show_member(Member *member){
+  fprintf(stderr, "  -- member  name: %s  offset: %d  size: %d  ", member->name, member->offset, member->type->size);
+  show_type(member->type);
+  fprintf(stderr, "\n");
+}
+
+void show_members(Member *members){
+  fprintf(stderr, "** members\n");
+  for (Member *mem = members; mem; mem = mem->next){
+    show_member(mem);
+  }
+  fprintf(stderr, "** members end\n");
+}
