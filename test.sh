@@ -17,18 +17,6 @@ assert() {
   fi
 }
 
-assert 2 "int main(){ char a[2]; return sizeof(a); }"
-assert 16 "int main(){ struct t {int a; int b;} x; struct t y; return sizeof(y); }"
-assert 16 "int main(){ struct t {int a; int b;}; struct t y; return sizeof(y); }"
-assert 2 "int main(){ struct t {char a[2];}; struct t y; return sizeof(y); }"
-assert 2 "int main(){ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; return sizeof(y); }"
-assert 2 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return y.x; }"
-assert 3 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return t+y.x; }"
-
-
-assert 0 'int main(){ struct t { int a; char *b; char c; }; return 0; }'
-assert 0 'int main(){ struct { int a; char *b; char c; } first; return 0; }'
-
 assert 0 "int main(){ return 0; }"
 assert 42 "int main(){ return 42; }"
 assert 25 "int main(){ return 5+20; }"
@@ -108,5 +96,14 @@ assert 110 'int main(){ char *a; a = "Answer to the Ultimate Question of Life, t
 assert 110 'int main(){ /* block comment */ char *a; a = "Answer to the Ultimate Question of Life, the Universe, and Everything"; return a[1]; }'
 assert 6 'int main(){ return sizeof("abcde"); }'
 assert 10 'int main(){ int a; a = 10; { int a; a = 20; } return a; }'
+assert 0 'int main(){ struct t { int a; char *b; char c; }; return 0; }'
+assert 0 'int main(){ struct { int a; char *b; char c; } first; return 0; }'
+assert 2 "int main(){ char a[2]; return sizeof(a); }"
+assert 16 "int main(){ struct t {int a; int b;} x; struct t y; return sizeof(y); }"
+assert 16 "int main(){ struct t {int a; int b;}; struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {char a[2];}; struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; return sizeof(y); }"
+assert 2 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return y.x; }"
+assert 3 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return t+y.x; }"
 
 echo OK
