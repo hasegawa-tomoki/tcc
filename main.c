@@ -18,11 +18,12 @@ int main(int argc, char **argv){
   for (Function *fn = prog; fn; fn = fn->next){
     int offset = 0;
     for (VarList *vl = fn->locals; vl; vl = vl->next){
+      offset = align_to(offset, vl->var->type->align);
       offset += vl->var->type->size;
       vl->var->offset = offset;
     }
     fn->stack_size = offset;
-    show_variables(fn->locals);
+    //show_variables(fn->locals);
   }
   //show_nodes(prog);
 
