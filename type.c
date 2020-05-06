@@ -114,7 +114,9 @@ Type *expect_type(){
       if (! sc){
         error_token(token, "Undefined struct tag");
       }
-      return sc->type;
+      Type *ty = sc->type;
+      ty = consume_pointer(ty);
+      return ty;
     }
     // struct {} or struct foo {}
     expect("{");

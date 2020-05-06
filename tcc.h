@@ -245,7 +245,7 @@ void push_var2scope(Var *var);
 Type *read_type_suffix(Type *type);
 Var *new_var();
 void declare_gvar();
-void declare_lvar();
+Var *declare_lvar();
 
 // codegen.c
 

@@ -61,10 +61,11 @@ void declare_gvar(){
   add_var2globals(var);
 }
 
-void declare_lvar(){
+Var *declare_lvar(){
   Var *var = new_var();
-  expect(";");
   if (var){
     add_var2locals(var);
+    return var;
   }
+  return NULL;
 }

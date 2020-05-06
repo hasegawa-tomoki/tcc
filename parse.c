@@ -109,13 +109,13 @@ Function *function(){
   return fn;
 }
 
-// stmt = expr ";"
-//      | "{" stmt* "}"
-//      | "return" expr ";"
+// stmt = "return" expr ";"
 //      | "if" "(" expr ")" stmt ("else" stmt)?
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "{" stmt* "}"
 //      | declaration
+//      | expr ";"
 Node *stmt(){
   Node *node;
 
@@ -177,9 +177,19 @@ Node *stmt(){
     return node;
   }
 
+  // declaration
   if (peek_type()){
-    declare_lvar();
-    return new_node(ND_NULL);
+    Var *var = declare_lvar();
+    if (consume(";")){
+      return new_node(ND_NULL);
+    }
+
+    expect("=");
+    Node *lhs = new_var_node(var);
+    Node *rhs = expr();
+    expect(";");
+    Node *node = new_lr_node(ND_ASSIGN, lhs, rhs);
+    return node;
   }
 
   node = expr();
@@ -292,7 +302,7 @@ Node *unary(){
   return postfix();
 }
 
-// postfix = primary ("[" expr "]")*
+// postfix = primary ("[" expr "]" | "." ident | "->" ident)*
 Node *postfix(){
   Node *node = primary();
 
@@ -306,6 +316,13 @@ Node *postfix(){
     }
 
     if (consume(".")){
+      node = new_struct_ref_node(node);
+      continue;
+    }
+
+    // x->y = (*x).y
+    if (consume("->")){
+      node = new_deref_node(node);
       node = new_struct_ref_node(node);
       continue;
     }

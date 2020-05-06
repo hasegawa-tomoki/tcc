@@ -105,5 +105,9 @@ assert 2 "int main(){ struct t {char a[2];}; struct t y; return sizeof(y); }"
 assert 2 "int main(){ struct t {char a[2];}; { struct t {char a[4];}; } struct t y; return sizeof(y); }"
 assert 2 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return y.x; }"
 assert 3 "int main(){ struct t {int x;}; int t; t=1; struct t y; y.x=2; return t+y.x; }"
+assert 3 "int main(){ struct t {char a;} x; struct t *y; y = &x; x.a=3; y->a; }"
+assert 3 "int main(){ struct t {char a;} x; struct t *y; y = &x; y->a=3; x.a; }"
+assert 3 "int main(){ int a = 3; return a; }"
+assert 3 "int main(){ struct t {char a;} x; struct t *y = &x; y->a=3; x.a; }"
 
 echo OK
