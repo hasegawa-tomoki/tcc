@@ -195,3 +195,21 @@ void show_members(Member *members){
   }
   fprintf(stderr, "** members end\n");
 }
+
+void show_var_scopes(VarScope *_var_scopes){
+  fprintf(stderr, "** var_scopes\n");
+  for (VarScope *vsc = _var_scopes; vsc; vsc = vsc->next){
+    fprintf(stderr, "  - var_scope name: %s  ", vsc->name);
+    if (vsc->var){
+      VarList *vl = calloc(1, sizeof(VarList));
+      vl->var = vsc->var;
+      show_variable(vl);
+    }
+    if (vsc->type_def){
+      fprintf(stderr, "[typedef] ");
+      show_type(vsc->type_def);
+      fprintf(stderr, "\n");
+    }
+  }
+  fprintf(stderr, "** var_scopes end\n");
+}

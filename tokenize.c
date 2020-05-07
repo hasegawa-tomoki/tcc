@@ -5,11 +5,11 @@ Token *token;
 char *user_input;
 VarList *locals;
 VarList *globals;
-VarList *var_scope;
+VarScope *var_scope;
 TagScope *tag_scope;
 
 char *keywords[] = {
-  "return", "if", "else", "while", "for", "sizeof", "struct", 
+  "return", "if", "else", "while", "for", "sizeof", "struct", "typedef", 
 };
 
 Type *consume_pointer(Type *type){

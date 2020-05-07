@@ -1,27 +1,28 @@
 #include "tcc.h"
 
-Var *find_var(VarList *var_list, Token *tok){
-  for (VarList *vl = var_list; vl; vl = vl->next){
-    if (strlen(vl->var->name) == tok->len && !strncmp(tok->str, vl->var->name, tok->len)){
-      return vl->var;
+VarScope *find_var(Token *tok){
+  for (VarScope *vsc = var_scope; vsc; vsc = vsc->next){
+    if (strlen(vsc->name) == tok->len && !strncmp(tok->str, vsc->name, tok->len)){
+      return vsc;
     }
   }
   return NULL;
 }
 
-Var *find_scope_var(Token *tok){
-  return find_var(var_scope, tok);
+void push_var(Var *var){
+  VarScope *vsc = calloc(1, sizeof(VarScope));
+  vsc->var = var;
+  vsc->name = var->name;
+  vsc->next = var_scope;
+  var_scope = vsc;
 }
 
-Var *find_global_var(Token *tok){
-  return find_var(globals, tok);
-}
-
-void push_var2scope(Var *var){
-  VarList *svl = calloc(1, sizeof(VarList));
-  svl->var = var;
-  svl->next = var_scope;
-  var_scope = svl;
+void push_typedef(char *name, Type *type_def){
+  VarScope *vsc = calloc(1, sizeof(VarScope));
+  vsc->type_def = type_def;
+  vsc->name = name;
+  vsc->next = var_scope;
+  var_scope = vsc;
 }
 
 Type *read_type_suffix(Type *type){
@@ -49,16 +50,20 @@ Var *new_var(){
   var->name = var_name;
   var->type = type;
 
-  push_var2scope(var);
+  push_var(var);
 
   return var;
 }
 
-void declare_gvar(){
+Var *declare_gvar(){
   Var *var = new_var();
-  var->is_global = true;
-  expect(";");
-  add_var2globals(var);
+  if (var){
+    var->is_global = true;
+    expect(";");
+    add_var2globals(var);
+    return var;
+  }
+  return NULL;
 }
 
 Var *declare_lvar(){

@@ -87,7 +87,7 @@ assert 12 "int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return x[0] + x[1] + x[2
 assert 7 "int main() { int x[3][3]; x[0][0]=3; x[1][1]=4; return x[0][0] + x[1][1]; }"
 assert 1 'int main() { int x[2][3]; int *y; y=x; *(y+1)=1; return *(*x+1); }'
 assert 3 'int x; int main() { x=3; return x; }'
-assert 128 'int ga; int main(){ ga = 100; test(); return ga; } int test(){ ga = ga + 28; }'
+assert 128 'int x; int main(){ x = 100; test(); return x; } int test(){ x = x + 28; }'
 assert 97 "int main(){ char a; a = 97; return a; }"
 assert 97 "int main(){ char a; a = 'a'; return a; }"
 assert 65 'int main(){ char *a; a = "ABC"; return a[0]; }'
@@ -109,5 +109,8 @@ assert 3 "int main(){ struct t {char a;} x; struct t *y; y = &x; x.a=3; y->a; }"
 assert 3 "int main(){ struct t {char a;} x; struct t *y; y = &x; y->a=3; x.a; }"
 assert 3 "int main(){ int a = 3; return a; }"
 assert 3 "int main(){ struct t {char a;} x; struct t *y = &x; y->a=3; x.a; }"
+assert 1 "int main(){ typedef struct {int a;} t; t x; x.a=1; x.a; }"
+assert 1 "int main(){ typedef int t; t t=1; t; }"
+assert 2 "int main(){ typedef struct {int a;} t; { typedef int t; } t x; x.a=2; x.a; }"
 
 echo OK

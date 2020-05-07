@@ -81,7 +81,7 @@ TagScope *find_tag(Token *tok){
   return NULL;
 }
 
-void push_tag2scope(Token *tok, Type *type){
+void push_tag(Token *tok, Type *type){
   TagScope *sc = calloc(1, sizeof(TagScope));
   sc->name = substr(tok->str, tok->len);
   sc->type = type;
@@ -130,10 +130,19 @@ Type *expect_type(){
     Type *ty = new_struct_type(members);
 
     if (tag){
-      push_tag2scope(tag, ty);
+      push_tag(tag, ty);
     }
     
     return ty;
+  }
+
+  Token *ident = consume_ident();
+  if (ident){
+    VarScope *vsc = find_var(ident);
+    if (vsc->type_def != NULL){
+      Type *type = consume_pointer(vsc->type_def);
+      return type;
+    }
   }
 
   error_at(token->str, "expected any type");
@@ -146,13 +155,21 @@ bool peek_type(){
       token = saved;
       return true;
     }
-    token = saved;
   }
-  saved = token;
   if (consume("struct")){
     token = saved;
     return true;
   }
+  Token *ident = consume_ident();
+  if (ident){
+    VarScope *vsc = find_var(ident);
+    if (vsc && vsc->type_def){
+      Type *type = consume_pointer(vsc->type_def);
+      token = saved;
+      return type;
+    }
+  }
 
+  token = saved;
   return false;
 }

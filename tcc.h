@@ -72,6 +72,14 @@ struct VarList {
   Var *var;
 };
 
+typedef struct VarScope VarScope;
+struct VarScope {
+  VarScope *next;
+  Var *var;
+  char *name;
+  Type *type_def;
+};
+
 typedef struct TagScope TagScope;
 struct TagScope {
   TagScope *next;
@@ -84,12 +92,12 @@ extern Token *token;
 extern char *user_input;
 extern VarList *locals;
 extern VarList *globals;
-extern VarList *var_scope;
+extern VarScope *var_scope;
 extern TagScope *tag_scope;
 
 typedef struct Scope Scope;
 struct Scope {
-  VarList *var_scope;
+  VarScope *var_scope;
   TagScope *tag_scope;
 };
 
@@ -238,13 +246,14 @@ Node *primary();
 
 // var.c
 
-Var *find_var(VarList *var_list, Token *tok);
+VarScope *find_var(Token *tok);
 Var *find_scope_var(Token *tok);
 Var *find_global_var(Token *tok);
-void push_var2scope(Var *var);
+void push_var(Var *var);
+void push_typedef(char *name, Type *type_def);
 Type *read_type_suffix(Type *type);
 Var *new_var();
-void declare_gvar();
+Var *declare_gvar();
 Var *declare_lvar();
 
 // codegen.c
@@ -268,10 +277,12 @@ void show_node(Node *node, char *name, int indent);
 void show_nodes(Function *prog);
 void show_token(Token *tok);
 void show_tokens(Token *tok);
+void show_type(Type *type);
 void show_variable(VarList *var_list);
 void show_variables(VarList *var_list);
 void show_member(Member *member);
 void show_members(Member *members);
+void show_var_scopes(VarScope *var_scopes);
 
 // util.c
 

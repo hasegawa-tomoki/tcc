@@ -114,6 +114,7 @@ Function *function(){
 //      | "while" "(" expr ")" stmt
 //      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
 //      | "{" stmt* "}"
+//      | "typedef" type ident ("[" num "]")* ";"
 //      | declaration
 //      | expr ";"
 Node *stmt(){
@@ -177,6 +178,18 @@ Node *stmt(){
     return node;
   }
 
+  // "typedef" type ident ("[" num "]")* ";"
+  if (consume("typedef")){
+    Type *type = expect_type();
+    type = consume_pointer(type);
+    char *name = expect_ident();
+    type = read_type_suffix(type);
+    expect(";");
+    push_typedef(name, type);
+
+    return new_node(ND_NULL);
+  }
+
   // declaration
   if (peek_type()){
     Var *var = declare_lvar();
@@ -192,6 +205,7 @@ Node *stmt(){
     return node;
   }
 
+  // expr ";"
   node = expr();
   consume(";");
   return node;
@@ -366,7 +380,6 @@ Node *primary(){
     if (gvar){
       return gvar;
     }
-
     return new_local_var_node(tok);
   }
 
