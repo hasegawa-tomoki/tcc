@@ -148,20 +148,3 @@ Node *new_var_node(Var *var){
   node->type = var->type;
   return node;
 }
-
-Node *new_local_var_node(Token *tok){
-  VarScope *vsc = find_var(tok);
-  if (vsc && vsc->var){
-    return new_var_node(vsc->var);
-  }
-  
-  error_at(token->str, "Undefined scope variable.");
-}
-
-Node *new_global_var_node(Token *tok){
-  VarScope *gvar = find_var(tok);
-  if (gvar && gvar->var){
-    return new_var_node(gvar->var);
-  }
-  return NULL;
-}

@@ -375,12 +375,12 @@ Node *primary(){
       return node;
     }
 
-    // Variable
-    Node *gvar = new_global_var_node(tok);
-    if (gvar){
-      return gvar;
+    VarScope *vsc = find_var(tok);
+    if (vsc && vsc->var){
+      return new_var_node(vsc->var);
     }
-    return new_local_var_node(tok);
+    
+    error_at(token->str, "Undefined scope variable.");
   }
 
   if (token->kind == TK_STR){

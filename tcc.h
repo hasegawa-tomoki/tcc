@@ -188,8 +188,6 @@ Node *new_add_node(Node *lhs, Node *rhs);
 Node *new_sub_node(Node *lhs, Node *rhs);
 Node *new_num_node(int val);
 Node *new_var_node(Var *var);
-Node *new_local_var_node(Token *tok);
-Node *new_global_var_node(Token *tok);
 
 // type.c
 
