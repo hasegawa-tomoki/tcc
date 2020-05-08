@@ -380,7 +380,7 @@ Node *primary(){
       return new_var_node(vsc->var);
     }
     
-    error_at(token->str, "Undefined scope variable.");
+    error_at(token->str, "Undefined variable.");
   }
 
   if (token->kind == TK_STR){
