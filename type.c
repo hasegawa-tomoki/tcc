@@ -45,7 +45,7 @@ Type *new_struct_type(Member *members){
 }
 
 Type *new_int_type(){
-  return new_type(TY_INT, 8, 8);
+  return new_type(TY_INT, 4, 4);
 }
 
 Type *new_char_type(){

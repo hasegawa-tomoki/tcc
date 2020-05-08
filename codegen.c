@@ -1,6 +1,8 @@
 #include "tcc.h"
 
-static char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+static char *argregs1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+static char *argregs4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
+static char *argregs8[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 static char *funcname;
 static int indent;
 
@@ -26,7 +28,6 @@ void gen_lval(Node *node){
   indent++;
   asmc("# --- gen_lval start %s\n", node2str(node));
   if (node->kind == TY_ARRAY){
-    //show_node(node, "gen_lval", 0);
     error("not an lvalue");
   }
   gen_addr(node);
@@ -61,33 +62,47 @@ void gen_addr(Node *node){
   indent--;
 }
 
-// value < [address]
+// pop address, value < [address], push value
 void load(Type *type){
   indent++;
   asmc("# --- load {\n");
   printf("  pop rax\n");
-  if (type->size == 1){
-    printf("  movsx rax, byte ptr [rax]\n");
-  } else {
-    // size = 8 (64bit)
-    printf("  mov rax, [rax]\n");
+  switch (type->size){
+    case 1:
+      printf("  movsx rax, byte ptr [rax]\n");
+      break;
+    case 4:
+      printf("  movsxd rax, dword ptr [rax]\n");
+      break;
+    case 8:
+      printf("  mov rax, [rax]\n");
+      break;
+    default:
+      error("Invalid size. (load())");
   }
   printf("  push rax\n");
   asmc("# --- load }\n");
   indent--;
 }
 
-// value > [addres]
+// pop value, pop address, [addres] < value, push value
 void store(Type *type){
   indent++;
   asmc("# --- store {\n");
   printf("  pop rdi\n");
   printf("  pop rax\n");
-  if (type->size == 1){
-    printf("  mov [rax], dil\n");
-  } else {
-    // size = 8 (64bit)
-    printf("  mov [rax], rdi\n");
+  switch(type->size){
+    case 1:
+      printf("  mov [rax], dil\n");
+      break;
+    case 4:
+      printf("  mov [rax], edi\n");
+      break;
+    case 8:
+      printf("  mov [rax], rdi\n");
+      break;
+    default:
+      error("Invalid size. (store())");
   }
   printf("  push rdi\n");
   asmc("# --- store }\n");
@@ -271,7 +286,7 @@ void gen(Node *node){
       asmc("# --- gen %s: args pop {\n", node_name(node->kind));
       indent++;
       for (int i = argcnt - 1; i >= 0; i--){
-        printf("  pop %s\n", argregs[i]);
+        printf("  pop %s\n", argregs8[i]);
       }
       indent--;
       asmc("# --- gen %s: args pop }\n", node_name(node->kind));
@@ -396,7 +411,19 @@ void codegen(Function *prog){
     printf("  # --- write function parameters to stack\n");
     int idx = 0;
     for (VarList *vl = fn->params; vl; vl = vl->next){
-      printf("  mov [rbp - %d], %s\n", vl->var->offset, argregs[idx]);
+      switch (vl->var->type->size){
+        case 1:
+          printf("  mov [rbp - %d], %s\n", vl->var->offset, argregs1[idx]);
+          break;
+        case 4:
+          printf("  mov [rbp - %d], %s\n", vl->var->offset, argregs4[idx]);
+          break;
+        case 8:
+          printf("  mov [rbp - %d], %s\n", vl->var->offset, argregs8[idx]);
+          break;
+        default:
+          error("Invalid var size: %d", vl->var->type->size);
+      }
       idx++;
     }
     asmc("# --- \n\n");
