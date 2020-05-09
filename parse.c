@@ -65,7 +65,11 @@ Function *program(){
 
   while (! at_eof()){
     if (is_function()){
-      cur->next = function();
+      Function *fn = function();
+      if (! fn){
+        continue;
+      }
+      cur->next = fn;
       cur = cur->next;
     } else {
       // global variable declaration
@@ -76,7 +80,9 @@ Function *program(){
   return head.next;
 }
 
-// function = ident "(" ")" "{" stmt* "}"
+// function = ident "(" params? ")" ( "{" stmt* "}" | ";")
+// params = param ("," param)*
+// param = type variable
 Function *function(){
   locals = NULL;
 
@@ -84,9 +90,16 @@ Function *function(){
 
   Type *fn_type = expect_type();
   char *name = expect_ident();
+
   // args
   expect("(");
   VarList *params = read_func_params();
+
+  if (consume(";")){
+    leave_scope(sc);
+    return NULL;
+  }
+  
   // body
   expect("{");
 
