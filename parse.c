@@ -86,13 +86,19 @@ Function *program(){
 Function *function(){
   locals = NULL;
 
-  Scope *sc = enter_scope();
-
   Type *fn_type = expect_type();
   char *name = expect_ident();
 
+  // Push function type/name to var_scope
+  Var *var = calloc(1, sizeof(Var));
+  var->name = name;
+  var->type = new_func_type(fn_type);
+  push_var(var);
+
   // args
   expect("(");
+
+  Scope *sc = enter_scope();
   VarList *params = read_func_params();
 
   if (consume(";")){
@@ -109,6 +115,7 @@ Function *function(){
     cur->next = stmt();
     cur = cur->next;
   }
+  leave_scope(sc);
 
   Function *fn = calloc(1, sizeof(Function));
   fn->name = name;
@@ -116,8 +123,6 @@ Function *function(){
   fn->params = params;
   fn->node = head.next;
   fn->locals = locals;
-
-  leave_scope(sc);
 
   return fn;
 }
@@ -385,6 +390,18 @@ Node *primary(){
       Node *node = new_node(ND_FUNCCALL);
       node->funcname = substr(tok->str, tok->len);
       node->args = head;
+
+      VarScope *vsc = find_var(tok);
+      if (vsc){
+        if ((! vsc->var) || (vsc->var->type->kind != TY_FUNC)){
+          error_token(token, "Not a function");
+        }
+        node->type = vsc->var->type->return_type;
+      } else {
+        warning_token(node->token, "Implicit declaration of a function");
+        node->type = new_int_type();
+      }
+
       return node;
     }
 

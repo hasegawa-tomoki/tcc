@@ -2,6 +2,7 @@
 
 VarScope *find_var(Token *tok){
   for (VarScope *vsc = var_scope; vsc; vsc = vsc->next){
+    //debug("Search var: %s  vs var_scope: %s", substr(tok->str, tok->len), vsc->name);
     if (strlen(vsc->name) == tok->len && !strncmp(tok->str, vsc->name, tok->len)){
       return vsc;
     }
@@ -9,6 +10,7 @@ VarScope *find_var(Token *tok){
   return NULL;
 }
 
+// Create and push var to var_scope
 void push_var(Var *var){
   VarScope *vsc = calloc(1, sizeof(VarScope));
   vsc->var = var;

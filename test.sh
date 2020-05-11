@@ -57,11 +57,11 @@ assert 1 "int main(){ int a; a = 1;if (a) return 1; else return 0; }"
 assert 10 "int main(){ int a; a = 1; while (a < 10) a = a + 1; return a; }"
 assert 10 "int main(){ int i; for (i = 0; i < 10; i = i + 1) return 10; }"
 assert 3 "int main(){ int i; int a; for (i = 0; i < 10; i = i + 1){ a = 3; return a; } }"
-assert 10 "int main(){ return test(); } int test(){ return 10; }"
+assert 10 "int test(); int main(){ return test(); } int test(){ return 10; }"
 assert 10 "int test(){ return 10; } int main(){ return test(); }"
 assert 4 "int main(){ int a; int b; a = 10; b = 20; return &b - &a; }"
-assert 2 "int main(){ return test(2); } int test(int a){ return a; }"
-assert 5 "int main(){ return test(2, 3); } int test(int a, int b){ return a + b; }"
+assert 2 "int test(int a); int main(){ return test(2); } int test(int a){ return a; }"
+assert 5 "int test(int a, int b); int main(){ return test(2, 3); } int test(int a, int b){ return a + b; }"
 assert 1 "int main(){ int *a; return 1; }"
 assert 1 "int main(){ int **a; return 1; }"
 assert 3 "int main(){ int x; int *y; y = &x; *y = 3; return x; }"
@@ -87,7 +87,7 @@ assert 12 "int main() { int x[3]; *x=3; x[1]=4; x[2]=5; return x[0] + x[1] + x[2
 assert 7 "int main() { int x[3][3]; x[0][0]=3; x[1][1]=4; return x[0][0] + x[1][1]; }"
 assert 1 'int main() { int x[2][3]; int *y; y=x; *(y+1)=1; return *(*x+1); }'
 assert 3 'int x; int main() { x=3; return x; }'
-assert 128 'int x; int main(){ x = 100; test(); return x; } int test(){ x = x + 28; }'
+assert 128 'int test(); int x; int main(){ x = 100; test(); return x; } int test(){ x = x + 28; }'
 assert 97 "int main(){ char a; a = 97; return a; }"
 assert 97 "int main(){ char a; a = 'a'; return a; }"
 assert 65 'int main(){ char *a; a = "ABC"; return a[0]; }'

@@ -8,7 +8,7 @@ void error(char *fmt, ...){
   exit(1);
 }
 
-void error_at(char *loc, char *fmt, ...){
+void verror_at(char *loc, char *fmt, va_list ap){
   // Calc start & end position including loc
   char *line = loc;
   while (user_input < line && line[-1] != '\n'){
@@ -29,9 +29,6 @@ void error_at(char *loc, char *fmt, ...){
   int indent = fprintf(stderr, "%s:%d: ", filename, line_num);
   fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
-  va_list ap;
-  va_start(ap, fmt);
-
   int pos = loc - line + indent;
   fprintf(stderr, "%*s", pos, "");
   fprintf(stderr, "^ ");
@@ -40,10 +37,24 @@ void error_at(char *loc, char *fmt, ...){
   exit(1);
 }
 
+void error_at(char *loc, char *fmt, ...){
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(loc, fmt, ap);
+  exit(1);
+}
+
 void error_token(Token *tok, char *fmt, ...){
   va_list ap;
   va_start(ap, fmt);
-  error_at(tok->str, fmt, ap);
+  verror_at(tok->str, fmt, ap);
+  exit(1);
+}
+
+void warning_token(Token *tok, char *fmt, ...){
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(tok->str, fmt, ap);
 }
 
 char *substr(char *src, int len){

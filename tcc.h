@@ -35,6 +35,7 @@ typedef enum {
   TY_PTR, 
   TY_ARRAY, 
   TY_STRUCT, 
+  TY_FUNC, 
 } TypeKind;
 
 typedef struct Type Type;
@@ -46,6 +47,7 @@ struct Type {
   int array_len;
   int align;
   Member *members;
+  Type *return_type;
 };
 
 struct Member {
@@ -201,6 +203,7 @@ Type *new_array_type(Type *ptr_to, int length);
 Type *new_struct_type(Member *members);
 Type *new_int_type();
 Type *new_char_type();
+Type *new_func_type(Type *return_type);
 Type *pointer_to(Type *type);
 
 TagScope *find_tag(Token *tok);
@@ -285,8 +288,10 @@ void show_var_scopes(VarScope *var_scopes);
 // util.c
 
 void error(char *fmt, ...);
+void verror_at(char *loc, char *fmt, va_list ap);
 void error_at(char *loc, char *fmt, ...);
 void error_token(Token *tok, char *fmt, ...);
+void warning_token(Token *tok, char *fmt, ...);
 char *substr(char *src, int len);
 void debug(char *fmt, ...);
 char *read_file(char *path);

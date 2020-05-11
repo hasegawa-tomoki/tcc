@@ -52,6 +52,12 @@ Type *new_char_type(){
   return new_type(TY_INT, 1, 1);
 }
 
+Type *new_func_type(Type *return_type){
+  Type *type = new_type(TY_FUNC, 1, 1);
+  type->return_type = return_type;
+  return type;
+}
+
 Type *pointer_to(Type *type){
   Type *ty = new_type(TY_PTR, 8, 8);
   ty->ptr_to = type;

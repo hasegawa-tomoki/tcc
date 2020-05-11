@@ -48,6 +48,7 @@ char *type_name(int kind){
     "TY_PTR", 
     "TY_ARRAY", 
     "TY_STRUCT", 
+    "TY_FUNC", 
   };
   return type_kinds[kind];
 }
