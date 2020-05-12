@@ -31,7 +31,10 @@ void set_lhs(Node *node, Node *lhs){
       break;
     case ND_DEREF:
       if (! node->lhs->type->ptr_to){
-        error("invalid pointer dereference.");
+        error("Invalid pointer dereference.");
+      }
+      if (node->lhs->type->ptr_to->kind == TY_VOID){
+        error("Dereferencing a void pointer.");
       }
       node->type = node->lhs->type->ptr_to;
       break;

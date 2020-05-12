@@ -41,6 +41,9 @@ Type *read_type_suffix(Type *type){
 
 Var *new_var(){
   Type *type = expect_type();
+  if (type->kind == TY_VOID){
+    error_token(token, "Variable declared as void");
+  }
   Token* token = consume_ident();
   if (! token){
     return NULL;

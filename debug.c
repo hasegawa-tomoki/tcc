@@ -45,6 +45,7 @@ char *type_name(int kind){
   static char *type_kinds[] = {
     "TY_CHAR", 
     "TY_INT", 
+    "TY_VOID", 
     "TY_PTR", 
     "TY_ARRAY", 
     "TY_STRUCT", 

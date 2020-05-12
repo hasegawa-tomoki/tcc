@@ -32,6 +32,7 @@ struct Token {
 typedef enum {
   TY_CHAR,
   TY_INT, 
+  TY_VOID, 
   TY_PTR, 
   TY_ARRAY, 
   TY_STRUCT, 
@@ -194,7 +195,7 @@ Node *new_var_node(Var *var);
 // type.c
 
 // Edit here to add type
-extern char *typenames[2];
+extern char *typenames[3];
 
 int align_to(int n, int align);
 

@@ -9,7 +9,7 @@ VarScope *var_scope;
 TagScope *tag_scope;
 
 char *keywords[] = {
-  "return", "if", "else", "while", "for", "sizeof", "struct", "typedef", 
+  "return", "if", "else", "while", "for", "sizeof", "struct", "typedef", "void", 
 };
 
 Type *consume_pointer(Type *type){

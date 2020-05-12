@@ -113,5 +113,6 @@ assert 1 "int main(){ typedef struct {int a;} t; t x; x.a=1; x.a; }"
 assert 1 "int main(){ typedef int t; t t=1; t; }"
 assert 2 "int main(){ typedef struct {int a;} t; { typedef int t; } t x; x.a=2; x.a; }"
 assert 2 "int test(int a); int main(){ return(test(3)); } int test(int a){ return a - 1; }"
+assert 1 "void test(); int main(){ test(); return 1; } void test(){}"
 
 echo OK

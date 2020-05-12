@@ -2,9 +2,9 @@
 
 // Edit here to add type
 // - Must be in order with TypeKind declaration.
-// - Must be same size as declaration.
+// - Must be same array size as declaration.
 char *typenames[] = {
-  "char", "int",
+  "char", "int", "void", 
 };
 
 int align_to(int n, int align) {
@@ -58,6 +58,10 @@ Type *new_func_type(Type *return_type){
   return type;
 }
 
+Type *new_void_type(){
+  return new_type(TY_VOID, 1, 1);
+}
+
 Type *pointer_to(Type *type){
   Type *ty = new_type(TY_PTR, 8, 8);
   ty->ptr_to = type;
@@ -105,8 +109,10 @@ Type *expect_type(){
           ty = new_char_type();
           break;
         case TY_INT:
-          ty = new_int_type();
+          ty =  new_int_type();
           break;
+        case TY_VOID:
+          return new_void_type();
       }
       ty = consume_pointer(ty);
       return ty;
